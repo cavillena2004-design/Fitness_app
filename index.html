@@ -207,11 +207,12 @@ function alimentoSel() {
 }
 function listaAli() {
   const q = ui.aliBus.trim().toLowerCase(), rec = ui.aliTab === 'rec';
-  const L = rec ? db.recetas.map(r => ({ id: r.id, ...porCienReceta(r) })) : ingOrdenados();
+  const L = rec ? db.recetas.map(r => ({ id: r.id, nombre: r.nombre, ...calcReceta(r) })) : ingOrdenados();
   const F = L.filter(x => !q || x.nombre.toLowerCase().includes(q));
   if (!F.length) return `<p class="muted" style="padding:10px 12px;margin:0">${L.length ? 'Nada coincide con la búsqueda.' : rec ? 'Aún no tienes recetas (créalas en Configurar).' : 'Aún no tienes ingredientes (añádelos en Configurar).'}</p>`;
-  return `<div class="trow th"><span>Nombre (por 100 g)</span><span>kcal</span><span>Prot</span><span>Grasa</span></div>` +
-    F.map(x => `<button class="trow ${ui.aliSel?.id === x.id ? 'on' : ''}" data-a="aliSel" data-id="${x.id}"><span>${esc(x.nombre)}</span><span>${fmt(x.kcal)}</span><span>${fmt(x.prot, 1)}</span><span>${fmt(x.grasa, 1)}</span></button>`).join('');
+  // Recetas: se muestran y se añaden enteras (con un toque); ingredientes: por 100 g y luego se piden los gramos
+  return `<div class="trow th"><span>${rec ? 'Receta entera · toca para añadir' : 'Nombre (por 100 g)'}</span><span>kcal</span><span>Prot</span><span>Grasa</span></div>` +
+    F.map(x => `<button class="trow ${ui.aliSel?.id === x.id ? 'on' : ''}" data-a="${rec ? 'addRecAli' : 'aliSel'}" data-id="${x.id}"><span>${esc(x.nombre)}${rec ? `<br><small class="muted">${fmt(x.g)} g</small>` : ''}</span><span>${fmt(x.kcal)}</span><span>${fmt(x.prot, 1)}</span><span>${fmt(x.grasa, 1)}</span></button>`).join('');
 }
 function diaTot(f) {
   const t = { kcal: 0, prot: 0, grasa: 0 }, d = db.comidas[f] || {};
@@ -669,6 +670,12 @@ document.addEventListener('click', e => {
       const f = g / 100;
       cambio(() => { const d = db.comidas[ui.fecha] = db.comidas[ui.fecha] || {}; (d[V] = d[V] || []).push({ nombre: al.nombre, g, kcal: al.kcal * f, prot: al.prot * f, grasa: al.grasa * f }); ui.aliSel = null; });
       toast(`Añadido: ${al.nombre} (${fmt(g)} g)`); break;
+    }
+    case 'addRecAli': {
+      const r = db.recetas.find(x => x.id === id), k = ui.abierta; if (!r || !k) break;
+      const t = calcReceta(r); if (!t.g) return toast('Esa receta aún no tiene ingredientes.');
+      cambio(() => { const d = db.comidas[ui.fecha] = db.comidas[ui.fecha] || {}; (d[k] = d[k] || []).push({ nombre: r.nombre, g: t.g, kcal: t.kcal, prot: t.prot, grasa: t.grasa }); });
+      toast(`Añadida: ${r.nombre} (${fmt(t.kcal)} kcal)`); break;
     }
     case 'listo': {
       const n = COMIDAS.find(c => c[0] === V)?.[1] || '';
