@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2B3340">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>App Fitness</title>
+<style>
+  :root {
+    --bg: #EEF1F5; --card: #FFFFFF; --dark: #2B3340; --dark2: #3A4556;
+    --blue: #2563EB; --blue-d: #1D4ED8; --blue-l: #DBE6FB; --blue-m: #9DB8F0;
+    --text: #1C2430; --muted: #5B6676; --line: #E3E8EF; --borde: #C3CCD8; --rojo: #B42318;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  #app { max-width: 560px; margin: 0 auto; padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+  header { background: var(--dark); color: #fff; padding: calc(20px + env(safe-area-inset-top)) 18px 16px; }
+  header h1 { margin: 0; font-size: 24px; }
+  .sub { font-size: 13px; color: #C9D3E0; }
+  .tag { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--blue-m); }
+  .wrap { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--card); border-radius: 16px; padding: 16px; }
+  .card.sel { outline: 2px solid var(--blue); }
+  h2 { margin: 0 0 10px; font-size: 16px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .between { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .grow { flex: 1; min-width: 0; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .big { font-size: 30px; font-weight: 700; color: var(--blue); }
+  .bar { height: 12px; background: var(--blue-l); border-radius: 99px; overflow: hidden; margin: 8px 0; }
+  .bar > div { height: 100%; background: var(--blue); border-radius: 99px; }
+  .bar.over > div { background: var(--rojo); }
+  .g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .pill { background: var(--bg); border-radius: 10px; padding: 9px 10px; font-size: 12px; color: var(--muted); }
+  .pill b { display: block; font-size: 16px; color: var(--text); }
+  input, select { font: inherit; font-size: 16px; color: var(--text); border: 1px solid var(--borde); border-radius: 9px; padding: 10px; min-height: 44px; background: #fff; width: 100%; }
+  input:focus, select:focus { outline: 2px solid var(--blue); border-color: var(--blue); }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+  button { font: inherit; font-size: 15px; border: 0; border-radius: 10px; min-height: 44px; padding: 0 16px; cursor: pointer; }
+  .btn { background: var(--blue); color: #fff; font-weight: 600; }
+  .btn2 { background: var(--blue-l); color: var(--blue-d); font-weight: 600; }
+  .btn3 { background: var(--dark); color: #fff; font-weight: 600; }
+  .danger { background: transparent; color: var(--rojo); }
+  .link { background: none; padding: 0; min-height: 36px; color: var(--blue); font-weight: 600; }
+  .ico { background: var(--bg); color: var(--text); min-width: 44px; padding: 0; font-weight: 700; }
+  .w100 { width: 100%; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--dark2); padding: 4px; border-radius: 12px; margin-top: 12px; }
+  .seg button { background: transparent; color: #DBE6FB; min-height: 38px; }
+  .seg button.on { background: var(--blue); color: #fff; font-weight: 600; }
+  .datenav { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .datenav button { background: transparent; color: #fff; min-width: 44px; padding: 0; font-size: 22px; }
+  .datenav span { font-weight: 600; font-size: 15px; text-align: center; }
+  .mealhead { display: flex; justify-content: space-between; align-items: center; width: 100%; background: none; padding: 0; color: var(--text); font-weight: 600; font-size: 16px; }
+  .item { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; align-items: center; }
+  .addbox { background: var(--bg); border-radius: 12px; padding: 12px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+  .addbox .pill { background: #fff; text-align: center; }
+  .thumb { width: 56px; height: 56px; border-radius: 10px; background: var(--blue-l); color: var(--blue-d); font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; text-align: center; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .set { display: grid; grid-template-columns: 30px 1fr 1fr 48px; gap: 8px; align-items: center; padding: 4px 0; }
+  .set.head { font-size: 11px; font-weight: 600; color: var(--muted); }
+  .set.done input { background: var(--bg); color: var(--muted); }
+  .chk { width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--blue); background: #fff; padding: 0; display: flex; align-items: center; justify-content: center; }
+  .chk.on { background: var(--blue); }
+  .crono { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #banner { position: sticky; top: 0; z-index: 5; }
+  .descanso { background: var(--blue); color: #fff; padding: 12px 18px; }
+  .descanso .t { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .descanso .bar { background: #1E4FC0; height: 6px; }
+  .descanso .bar > div { background: #fff; }
+  .descanso button { min-height: 38px; }
+  .bars { display: flex; gap: 8px; align-items: flex-end; height: 112px; }
+  .bcol { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px; background: none; padding: 0; height: 100%; min-height: 0; color: var(--muted); font-size: 11px; }
+  .bcol.hi { color: var(--text); font-weight: 700; }
+  .bv { width: 100%; border-radius: 6px; }
+  .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .cal .dn { font-size: 11px; color: var(--muted); text-align: center; font-weight: 600; }
+  .cal button { background: var(--bg); padding: 4px 2px; min-height: 52px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 13px; color: var(--text); }
+  .cal button small { font-size: 10px; color: var(--blue-d); font-weight: 600; }
+  .cal button.over small { color: var(--rojo); }
+  .cal button.today { outline: 2px solid var(--blue); }
+  .fotos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .foto { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 3 / 4; background: var(--blue-l); border: 0; padding: 0; }
+  .foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .foto.sel { outline: 3px solid var(--blue); outline-offset: 1px; }
+  .foto span { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(28, 36, 48, .72); color: #fff; font-size: 11px; padding: 3px; }
+  .comp { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .comp img { width: 100%; border-radius: 10px; display: block; }
+  .subnav { display: flex; gap: 6px; overflow-x: auto; margin-top: 12px; padding-bottom: 2px; }
+  .subnav button { background: var(--dark2); color: #DBE6FB; white-space: nowrap; min-height: 38px; font-size: 14px; }
+  .subnav button.on { background: var(--blue); color: #fff; font-weight: 600; }
+  .crumbs { font-size: 14px; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .badge { font-size: 11px; font-weight: 700; background: var(--blue-l); color: var(--blue-d); padding: 3px 8px; border-radius: 99px; }
+  svg text { font-size: 10px; fill: var(--muted); }
+  #tabs { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #D5DBE3; display: grid; grid-template-columns: repeat(5, 1fr); padding: 4px 2px calc(6px + env(safe-area-inset-bottom)); z-index: 10; }
+  #tabs button { background: none; color: var(--muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; min-height: 54px; }
+  #tabs button.on { color: var(--blue); font-weight: 600; }
+  #toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; z-index: 20; display: none; max-width: 90vw; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav id="tabs" aria-label="Secciones"></nav>
+<div id="toast" role="status"></div>
+<script>
+/* ======================= Datos ======================= */
+const NUEVO = () => ({ version: 1, ajustes: { topeKcal: 2000 }, rutinas: [], ingredientes: [], recetas: [],
+  comidas: {}, entrenos: [], activo: null, peso: [], medidas: [], fotos: [] });
+let db = NUEVO();
+
+const COMIDAS = [['desayuno', 'Desayuno'], ['media', 'Media mañana'], ['comida', 'Comida'], ['merienda', 'Merienda'], ['cena', 'Cena']];
+const MEDIDAS = [['cintura', 'Cintura'], ['pecho', 'Pecho'], ['brazo', 'Brazo'], ['muslo', 'Muslo']];
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
+const fmt = (n, d = 0) => (n || 0).toLocaleString('es-ES', { maximumFractionDigits: d });
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const z2 = n => String(n).padStart(2, '0');
+const fechaStr = d => `${d.getFullYear()}-${z2(d.getMonth() + 1)}-${z2(d.getDate())}`;
+const hoy = () => fechaStr(new Date());
+const fd = f => new Date(f + 'T12:00');
+const sumarDias = (f, n) => { const d = fd(f); d.setDate(d.getDate() + n); return fechaStr(d); };
+const fechaLarga = f => { const d = fd(f); return `${cap(DIAS[d.getDay()])}, ${d.getDate()} de ${MESES[d.getMonth()]}`; };
+const corta = f => { const d = fd(f); return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}`; };
+const lunes = f => sumarDias(f, -((fd(f).getDay() + 6) % 7));
+const mmss = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return (h ? h + ':' + z2(m) : m) + ':' + z2(s % 60); };
+
+let ui = { tab: 'inicio', fecha: hoy(), vista: 'dia', abierta: null, cfg: 'rutinas', rutina: null, sesion: null,
+  editEj: null, fotoTmp: null, rec: null, buscar: '', prog: '', med: 'cintura', comp: [] };
+
+/* Guardado en el móvil (IndexedDB) */
+let idb;
+function abrirIDB() {
+  if (idb) return Promise.resolve(idb);
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('appFitness', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(idb = r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function cargar() {
+  const d = await abrirIDB();
+  return new Promise((res, rej) => { const q = d.transaction('kv').objectStore('kv').get('datos'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+}
+async function guardar() {
+  try {
+    const d = await abrirIDB();
+    await new Promise((res, rej) => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(db, 'datos'); t.oncomplete = res; t.onerror = () => rej(t.error); });
+  } catch { toast('No se ha podido guardar. ¿Queda espacio en el móvil?'); }
+}
+function cambio(fn) { fn(); guardar(); render(); }
+
+let toastT;
+function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 2600); }
+
+/* ======================= Cálculos ======================= */
+const ingPorId = id => db.ingredientes.find(i => i.id === id);
+const ingOrdenados = () => [...db.ingredientes].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+function calcReceta(r) {
+  const t = { g: 0, kcal: 0, prot: 0, grasa: 0 };
+  for (const it of r.items) {
+    const ing = ingPorId(it.ing), g = num(it.g); t.g += g;
+    if (ing) { const f = g / 100; t.kcal += ing.kcal * f; t.prot += ing.prot * f; t.grasa += ing.grasa * f; }
+  }
+  return t;
+}
+/* Devuelve los valores por 100 g de un ingrediente o receta a partir del texto escrito */
+function buscarAlimento(txt) {
+  const t = txt.trim().toLowerCase(); if (!t) return null;
+  const deRec = r => { const c = calcReceta(r), p = c.g ? 100 / c.g : 0; return { nombre: r.nombre, receta: true, kcal: c.kcal * p, prot: c.prot * p, grasa: c.grasa * p }; };
+  if (t.startsWith('receta · ')) { const r = db.recetas.find(r => r.nombre.toLowerCase() === t.slice(9)); return r ? deRec(r) : null; }
+  const i = db.ingredientes.find(i => i.nombre.toLowerCase() === t); if (i) return { nombre: i.nombre, ...i };
+  const r = db.recetas.find(r => r.nombre.toLowerCase() === t); if (r) return deRec(r);
+  const parc = [...db.ingredientes.filter(i => i.nombre.toLowerCase().startsWith(t)).map(i => ({ nombre: i.nombre, ...i })),
+                ...db.recetas.filter(r => r.nombre.toLowerCase().startsWith(t)).map(deRec)];
+  return parc.length === 1 ? parc[0] : null;
+}
+function diaTot(f) {
+  const t = { kcal: 0, prot: 0, grasa: 0 }, d = db.comidas[f] || {};
+  for (const [k] of COMIDAS) for (const it of d[k] || []) { t.kcal += it.kcal; t.prot += it.prot; t.grasa += it.grasa; }
+  return t;
+}
+function media(fechas) { const v = fechas.map(f => diaTot(f).kcal).filter(x => x > 0); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0; }
+function ultimoDe(ejId) {
+  for (let i = db.entrenos.length - 1; i >= 0; i--) { const e = db.entrenos[i].ejercicios.find(x => x.ejId === ejId); if (e) return e; }
+  return null;
+}
+function siguienteSesion() {
+  const u = db.entrenos[db.entrenos.length - 1];
+  if (u) for (const r of db.rutinas) { const i = r.sesiones.findIndex(s => s.id === u.sesionId); if (i >= 0 && r.sesiones.length) return { r, s: r.sesiones[(i + 1) % r.sesiones.length] }; }
+  const r = db.rutinas.find(r => r.sesiones.length); return r ? { r, s: r.sesiones[0] } : null;
+}
+
+function leerFoto(file, max) {
+  return new Promise((res, rej) => {
+    const lector = new FileReader();
+    lector.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        res(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = rej; img.src = lector.result;
+    };
+    lector.onerror = rej; lector.readAsDataURL(file);
+  });
+}
+
+/* ======================= Gráficas ======================= */
+function linea(pts) {
+  if (pts.length < 2) return '<p class="muted">Necesitas al menos 2 registros para ver la gráfica.</p>';
+  const W = 320, H = 150, pl = 36, pr = 10, pt = 12, pb = 24;
+  const ys = pts.map(p => p.y); let lo = Math.min(...ys), hi = Math.max(...ys); const real = [lo, hi];
+  if (lo === hi) { lo -= 1; hi += 1; } const pad = (hi - lo) * 0.12; lo -= pad; hi += pad;
+  const X = i => pl + (W - pl - pr) * i / (pts.length - 1), Y = v => pt + (H - pt - pb) * (1 - (v - lo) / (hi - lo)), L = pts.length - 1;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Gráfica de evolución de ${fmt(real[0], 1)} a ${fmt(ys[L], 1)}">
+    <line x1="${pl}" x2="${W - pr}" y1="${H - pb}" y2="${H - pb}" stroke="#E3E8EF"/>
+    <text x="${pl - 6}" y="${Y(real[1]) + 3}" text-anchor="end">${fmt(real[1], 1)}</text>
+    <text x="${pl - 6}" y="${Y(real[0]) + 3}" text-anchor="end">${fmt(real[0], 1)}</text>
+    <polyline points="${pts.map((p, i) => X(i).toFixed(1) + ',' + Y(p.y).toFixed(1)).join(' ')}" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.map((p, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="${i === L ? 4.5 : 2.5}" fill="#2563EB"/>`).join('')}
+    <text x="${pl}" y="${H - 6}">${esc(pts[0].x)}</text><text x="${W - pr}" y="${H - 6}" text-anchor="end">${esc(pts[L].x)}</text>
+  </svg>`;
+}
+function barrasSemana(f0) {
+  const tope = db.ajustes.topeKcal, dias = [...Array(7)].map((_, i) => sumarDias(f0, i)), vals = dias.map(f => diaTot(f).kcal);
+  const mx = Math.max(tope || 0, ...vals, 1);
+  return `<div class="bars">${dias.map((f, i) => {
+    const v = vals[i], col = tope && v > tope ? '#B42318' : f === hoy() ? '#2563EB' : '#9DB8F0';
+    return `<button class="bcol ${f === hoy() ? 'hi' : ''}" data-a="irDia" data-v="${f}" aria-label="${fechaLarga(f)}: ${fmt(v)} kcal">
+      <div class="bv" style="height:${Math.max(3, v / mx * 86)}px;background:${v ? col : '#D5DBE3'}"></div>${'LMXJVSD'[i]}</button>`;
+  }).join('')}</div>`;
+}
+
+/* ======================= Pantallas ======================= */
+const ICON = {
+  inicio: '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>',
+  ali: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+  entreno: '<path d="M3 12h3M18 12h3M6 8v8M18 8v8M9 10v4M15 10v4M9 12h6"/>',
+  personal: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
+  cfg: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>'
+};
+function render() {
+  const v = { inicio: vInicio, ali: vAli, entreno: vEnt, personal: vPer, cfg: vCfg };
+  document.getElementById('app').innerHTML = v[ui.tab]();
+  document.getElementById('tabs').innerHTML = [['inicio', 'Inicio'], ['ali', 'Alimentación'], ['entreno', 'Entreno'], ['personal', 'Personal'], ['cfg', 'Configurar']]
+    .map(([k, t]) => `<button class="${ui.tab === k ? 'on' : ''}" data-a="tab" data-v="${k}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">${ICON[k]}</svg>${t}</button>`).join('');
+  if (ui.tab === 'entreno' && db.activo) { pintarBanner(); tick(); }
+}
+
+function tarjetaCalorias(f) {
+  const t = diaTot(f), tope = db.ajustes.topeKcal, pct = tope ? Math.min(100, t.kcal / tope * 100) : 0, resta = tope - t.kcal;
+  return `<div class="card">
+    <div class="between"><b>Calorías</b><span class="muted">Tope ${fmt(tope)} kcal</span></div>
+    <div class="big">${fmt(t.kcal)} <span class="muted" style="font-weight:500">kcal</span></div>
+    <div class="bar ${t.kcal > tope ? 'over' : ''}"><div style="width:${pct}%"></div></div>
+    <div class="muted" style="margin-bottom:10px">${resta >= 0 ? `Te quedan ${fmt(resta)} kcal` : `Te has pasado ${fmt(-resta)} kcal`}</div>
+    <div class="g2"><div class="pill">Proteína<b>${fmt(t.prot, 1)} g</b></div><div class="pill">Grasa<b>${fmt(t.grasa, 1)} g</b></div></div>
+  </div>`;
+}
+
+function vInicio() {
+  const sig = siguienteSesion(), f0 = lunes(hoy()), p = db.peso[db.peso.length - 1];
+  const dias7 = [...Array(7)].map((_, i) => sumarDias(f0, i));
+  let entreno;
+  if (db.activo) entreno = `<div class="between"><div><span class="muted">Sesión en curso</span><div style="font-size:17px;font-weight:600">${esc(db.activo.nombre)}</div></div><button class="btn" data-a="tab" data-v="entreno">Continuar</button></div>`;
+  else if (sig) entreno = `<div class="between"><div><span class="muted">Siguiente entreno</span><div style="font-size:17px;font-weight:600">${esc(sig.s.nombre)}</div><span class="muted">${esc(sig.r.nombre)} · ${sig.s.ejercicios.length} ejercicios</span></div><button class="btn" data-a="start" data-r="${sig.r.id}" data-s="${sig.s.id}">Empezar</button></div>`;
+  else entreno = `<span class="muted">Aún no tienes rutinas.</span> <button class="link" data-a="tab" data-v="cfg">Crear en Configurar</button>`;
+  return `
+  <header><div class="sub">${fechaLarga(hoy())}</div><h1>Hola, Charlie</h1></header>
+  <div class="wrap">
+    ${tarjetaCalorias(hoy())}
+    <button class="link" style="align-self:flex-start;margin-top:-6px" data-a="irDia" data-v="${hoy()}">Ver comidas del día</button>
+    <div class="card">${entreno}</div>
+    <div class="card"><div class="between" style="margin-bottom:10px"><b>Esta semana</b><span class="muted">Media ${fmt(media(dias7))} kcal</span></div>${barrasSemana(f0)}</div>
+    ${p ? `<div class="card between"><div><span class="muted">Último peso</span><div style="font-size:20px;font-weight:700">${fmt(p.kg, 1)} kg</div></div><span class="muted">${corta(p.fecha)}</span></div>` : ''}
+  </div>`;
+}
+
+function vAli() {
+  const f = ui.fecha, V = ui.vista;
+  let titulo, cuerpo;
+  if (V === 'dia') {
+    titulo = f === hoy() ? 'Hoy' : fechaLarga(f);
+    const dia = db.comidas[f] || {};
+    const opciones = [...ingOrdenados().map(i => i.nombre), ...db.recetas.map(r => 'Receta · ' + r.nombre)].map(n => `<option value="${esc(n)}"></option>`).join('');
+    cuerpo = tarjetaCalorias(f) + COMIDAS.map(([k, n]) => {
+      const items = dia[k] || [], kc = items.reduce((a, b) => a + b.kcal, 0), open = ui.abierta === k;
+      return `<div class="card ${open ? 'sel' : ''}">
+        <button class="mealhead" data-a="meal" data-v="${k}" aria-expanded="${open}"><span>${n}</span><span style="color:${open ? 'var(--blue)' : 'var(--muted)'};font-size:14px">${kc ? fmt(kc) + ' kcal' : '—'}</span></button>
+        ${open ? `
+          ${items.map((it, i) => `<div class="item"><span class="grow">${esc(it.nombre)} · ${fmt(it.g)} g<br><span class="muted">${fmt(it.prot, 1)} g prot · ${fmt(it.grasa, 1)} g grasa</span></span><b>${fmt(it.kcal)} kcal</b><button class="ico danger" data-a="delAli" data-v="${k}" data-i="${i}" aria-label="Quitar ${esc(it.nombre)}">✕</button></div>`).join('')}
+          <div class="addbox">
+            ${db.ingredientes.length || db.recetas.length ? `
+            <div class="row" style="flex-wrap:nowrap">
+              <label class="grow">Ingrediente o receta<input id="aNom" list="alimentos" autocomplete="off" placeholder="Escribe para buscar"></label>
+              <label style="width:96px">Gramos<input id="aG" inputmode="decimal" placeholder="g"></label>
+            </div>
+            <datalist id="alimentos">${opciones}</datalist>
+            <div id="aPrev" class="muted">Elige un alimento de tu lista y pon los gramos.</div>
+            <button class="btn" data-a="addAli" data-v="${k}">Añadir a ${n.toLowerCase()}</button>` : `<span class="muted">Primero añade ingredientes en Configurar › Ingredientes.</span>`}
+          </div>` : ''}
+      </div>`;
+    }).join('');
+  } else if (V === 'semana') {
+    const f0 = lunes(f), dias = [...Array(7)].map((_, i) => sumarDias(f0, i));
+    titulo = `${corta(f0)} – ${corta(dias[6])}`;
+    cuerpo = `<div class="card"><div class="between" style="margin-bottom:10px"><b>Calorías por día</b><span class="muted">Media ${fmt(media(dias))} kcal</span></div>${barrasSemana(f0)}</div>
+      <div class="card">${dias.map(d => { const t = diaTot(d); return `<button class="item w100" style="background:none;border-radius:0;padding:10px 0;color:var(--text)" data-a="irDia" data-v="${d}"><span>${fechaLarga(d)}</span><b>${t.kcal ? fmt(t.kcal) + ' kcal' : '—'}</b></button>`; }).join('')}</div>`;
+  } else {
+    const d = fd(f), y = d.getFullYear(), m = d.getMonth(), n = new Date(y, m + 1, 0).getDate(), off = (new Date(y, m, 1).getDay() + 6) % 7;
+    const fechas = [...Array(n)].map((_, i) => `${y}-${z2(m + 1)}-${z2(i + 1)}`), tope = db.ajustes.topeKcal;
+    titulo = `${cap(MESES[m])} ${y}`;
+    cuerpo = `<div class="card"><div class="between" style="margin-bottom:10px"><b>Media del mes</b><span class="big" style="font-size:22px">${fmt(media(fechas))} kcal</span></div>
+      <div class="cal">${'LMXJVSD'.split('').map(x => `<div class="dn">${x}</div>`).join('')}${'<div></div>'.repeat(off)}
+      ${fechas.map((x, i) => { const k = diaTot(x).kcal; return `<button class="${x === hoy() ? 'today' : ''} ${tope && k > tope ? 'over' : ''}" data-a="irDia" data-v="${x}">${i + 1}<small>${k ? fmt(k) : ''}</small></button>`; }).join('')}</div></div>`;
+  }
+  return `
+  <header><h1>Alimentación</h1>
+    <div class="seg">${[['dia', 'Día'], ['semana', 'Semana'], ['mes', 'Mes']].map(([k, t]) => `<button class="${V === k ? 'on' : ''}" data-a="vista" data-v="${k}">${t}</button>`).join('')}</div>
+    <div class="datenav"><button data-a="mover" data-v="-1" aria-label="Anterior">‹</button><span>${titulo}</span><button data-a="mover" data-v="1" aria-label="Siguiente">›</button></div>
+  </header>
+  <div class="wrap">${cuerpo}</div>`;
+}
+
+function vEnt() {
+  if (db.activo) return vSesion();
+  const sig = siguienteSesion();
+  const ejs = {}; db.entrenos.forEach(e => e.ejercicios.forEach(x => ejs[x.ejId] = x.nombre));
+  if (!ui.prog || !ejs[ui.prog]) ui.prog = Object.keys(ejs)[0] || '';
+  const pts = ui.prog ? db.entrenos.filter(e => e.ejercicios.some(x => x.ejId === ui.prog)).map(e => {
+    const x = e.ejercicios.find(x => x.ejId === ui.prog); return { x: corta(e.fecha), y: Math.max(...x.series.map(s => s.kg)) };
+  }) : [];
+  return `
+  <header><h1>Entreno</h1><div class="sub">Elige una sesión para empezar</div></header>
+  <div class="wrap">
+    ${db.rutinas.map(r => `<div class="card"><h2>${esc(r.nombre)}</h2>
+      ${r.sesiones.map(s => `<div class="item"><span class="grow"><b>${esc(s.nombre)}</b> ${sig && sig.s.id === s.id ? '<span class="badge">Siguiente</span>' : ''}<br><span class="muted">${s.ejercicios.length} ejercicios</span></span>
+        <button class="${sig && sig.s.id === s.id ? 'btn' : 'btn2'}" data-a="start" data-r="${r.id}" data-s="${s.id}" ${s.ejercicios.length ? '' : 'disabled'}>Empezar</button></div>`).join('') || '<p class="muted">Sin sesiones.</p>'}
+    </div>`).join('') || '<div class="card"><span class="muted">Aún no tienes rutinas.</span> <button class="link" data-a="tab" data-v="cfg">Crear en Configurar</button></div>'}
+    <div class="card"><h2>Progreso por ejercicio</h2>
+      ${Object.keys(ejs).length ? `<select data-c="prog" aria-label="Ejercicio">${Object.entries(ejs).map(([id, n]) => `<option value="${id}" ${id === ui.prog ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
+        <p class="muted" style="margin:10px 0 4px">Peso máximo por sesión (kg)${pts.length ? ` · récord ${fmt(Math.max(...pts.map(p => p.y)), 1)} kg` : ''}</p>${linea(pts)}` : '<p class="muted">Cuando termines tu primera sesión verás aquí la evolución de cada ejercicio.</p>'}
+    </div>
+    <div class="card"><h2>Historial</h2>
+      ${db.entrenos.slice(-10).reverse().map(e => `<div class="item"><span class="grow"><b>${esc(e.nombre)}</b><br><span class="muted">${corta(e.fecha)} · ${mmss(e.duracion)} · ${e.ejercicios.reduce((a, x) => a + x.series.length, 0)} series</span></span>
+        <button class="ico danger" data-a="delEnt" data-id="${e.id}" aria-label="Borrar entreno">✕</button></div>`).join('') || '<p class="muted">Todavía no hay entrenos guardados.</p>'}
+    </div>
+  </div>`;
+}
+
+function vSesion() {
+  const a = db.activo;
+  const actual = a.ejercicios.findIndex(e => e.series.some(s => !s.hecha));
+  return `
+  <header><div class="sub">${esc(a.rutina)}</div><h1>${esc(a.nombre)}</h1>
+    <div class="between" style="margin-top:8px"><span class="sub">Tiempo de sesión</span><span class="crono" id="crono">${mmss((Date.now() - a.inicio) / 1000)}</span></div>
+  </header>
+  <div id="banner"></div>
+  <div class="wrap">
+    ${a.ejercicios.map((e, ei) => `<div class="card ${ei === actual ? 'sel' : ''}">
+      <div class="row" style="flex-wrap:nowrap;margin-bottom:8px">
+        <div class="thumb">${e.foto ? `<img src="${e.foto}" alt="">` : 'Sin foto'}</div>
+        <div class="grow"><b style="font-size:16px">${esc(e.nombre)}</b><br><span class="muted">${e.series.length} × ${esc(e.reps)} · ${e.dSerie} s entre series${ei < a.ejercicios.length - 1 ? ` · ${e.dEj} s al siguiente` : ''}</span></div>
+      </div>
+      <div class="set head"><span>Serie</span><span>Kg</span><span>Reps</span><span></span></div>
+      ${e.series.map((s, si) => `<div class="set ${s.hecha ? 'done' : ''}">
+        <b>${si + 1}</b>
+        <input data-c="set" data-e="${ei}" data-s="${si}" data-f="kg" value="${esc(s.kg)}" placeholder="${esc(s.phKg)}" inputmode="decimal" aria-label="Kilos serie ${si + 1}">
+        <input data-c="set" data-e="${ei}" data-s="${si}" data-f="reps" value="${esc(s.reps)}" placeholder="${esc(s.phReps)}" inputmode="numeric" aria-label="Repeticiones serie ${si + 1}">
+        <button class="chk ${s.hecha ? 'on' : ''}" data-a="chk" data-e="${ei}" data-s="${si}" aria-label="${s.hecha ? 'Desmarcar' : 'Marcar'} serie ${si + 1}">${s.hecha ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>' : ''}</button>
+      </div>`).join('')}
+      <button class="link" data-a="addSet" data-e="${ei}">+ Añadir serie</button>
+    </div>`).join('')}
+    <button class="btn3 w100" data-a="terminar" style="min-height:50px">Terminar y guardar sesión</button>
+    <button class="danger w100" data-a="cancelSes">Descartar sesión</button>
+  </div>`;
+}
+
+function vPer() {
+  const P = db.peso, pu = P[P.length - 1], M = db.medidas, mu = M[M.length - 1], mp = M[M.length - 2];
+  const ptsPeso = P.slice(-30).map(p => ({ x: corta(p.fecha), y: p.kg }));
+  const ptsMed = M.filter(m => m[ui.med] != null).map(m => ({ x: corta(m.fecha), y: m[ui.med] }));
+  const comp = ui.comp.map(id => db.fotos.find(f => f.id === id)).filter(Boolean);
+  return `
+  <header><div class="sub">Tu evolución</div><h1>Personal</h1></header>
+  <div class="wrap">
+    <div class="card">
+      <div class="between"><b>Peso corporal</b>${pu ? `<span class="muted">${corta(pu.fecha)}</span>` : ''}</div>
+      ${pu ? `<div class="row" style="align-items:baseline"><span class="big">${fmt(pu.kg, 1)} kg</span>${P.length > 1 ? `<span class="muted">${pu.kg - P[0].kg >= 0 ? '+' : '−'}${fmt(Math.abs(pu.kg - P[0].kg), 1)} kg desde ${corta(P[0].fecha)}</span>` : ''}</div>` : '<p class="muted">Aún no has apuntado tu peso.</p>'}
+      ${linea(ptsPeso)}
+      <div class="row" style="flex-wrap:nowrap;margin-top:10px"><label class="grow">Peso de hoy (kg)<input id="pKg" inputmode="decimal" placeholder="${pu ? fmt(pu.kg, 1) : '75,0'}"></label><button class="btn" data-a="peso" style="align-self:flex-end">Guardar</button></div>
+      ${P.length ? `<details style="margin-top:8px"><summary class="muted">Historial</summary>${P.slice(-10).reverse().map(p => `<div class="item"><span>${corta(p.fecha)}</span><span class="row"><b>${fmt(p.kg, 1)} kg</b><button class="ico danger" data-a="delPeso" data-v="${p.fecha}" aria-label="Borrar">✕</button></span></div>`).join('')}</details>` : ''}
+    </div>
+    <div class="card">
+      <h2>Medidas (cm)</h2>
+      ${mu ? `<div class="g2" style="margin-bottom:10px">${MEDIDAS.map(([k, n]) => { const d = mu[k] != null && mp && mp[k] != null ? mu[k] - mp[k] : null; return `<div class="pill">${n}<b>${mu[k] != null ? fmt(mu[k], 1) + ' cm' : '—'}</b>${d ? `${d > 0 ? '+' : '−'}${fmt(Math.abs(d), 1)} cm` : ''}</div>`; }).join('')}</div>
+        <div class="seg" style="grid-template-columns:repeat(4,1fr);background:var(--bg);margin:0 0 6px">${MEDIDAS.map(([k, n]) => `<button class="${ui.med === k ? 'on' : ''}" style="${ui.med === k ? '' : 'color:var(--muted)'}" data-a="med" data-v="${k}">${n}</button>`).join('')}</div>
+        ${linea(ptsMed)}` : '<p class="muted">Aún no has apuntado medidas.</p>'}
+      <div class="g2" style="margin-top:10px">${MEDIDAS.map(([k, n]) => `<label>${n}<input id="m_${k}" inputmode="decimal" placeholder="${mu && mu[k] != null ? fmt(mu[k], 1) : 'cm'}"></label>`).join('')}</div>
+      <button class="btn w100" style="margin-top:10px" data-a="medidas">Guardar medidas de hoy</button>
+    </div>
+    <div class="card">
+      <div class="between"><b>Fotos de progreso</b><span class="muted">${comp.length === 2 ? '' : 'Toca 2 para comparar'}</span></div>
+      ${comp.length === 2 ? `<div class="comp" style="margin:10px 0">${comp.sort((a, b) => a.fecha.localeCompare(b.fecha)).map(f => `<div><img src="${f.img}" alt="Foto del ${corta(f.fecha)}"><div class="muted" style="text-align:center">${corta(f.fecha)}</div></div>`).join('')}</div>` : ''}
+      <div class="fotos" style="margin-top:10px">
+        ${[...db.fotos].reverse().map(f => `<button class="foto ${ui.comp.includes(f.id) ? 'sel' : ''}" data-a="selFoto" data-id="${f.id}" aria-label="Foto del ${corta(f.fecha)}"><img src="${f.img}" alt=""><span>${corta(f.fecha)}</span></button>`).join('')}
+        <label class="foto" style="display:flex;align-items:center;justify-content:center;border:2px dashed var(--blue-m);color:var(--blue-d);font-weight:600;font-size:13px;cursor:pointer">+ Nueva<input type="file" accept="image/*" data-c="foto" hidden></label>
+      </div>
+      ${ui.comp.length ? `<div class="row" style="margin-top:10px"><button class="btn2" data-a="noSel">Quitar selección</button><button class="danger" data-a="delFotos">Borrar ${ui.comp.length === 1 ? 'foto' : 'fotos'}</button></div>` : ''}
+    </div>
+  </div>`;
+}
+
+/* ---------- Configuración ---------- */
+function vCfg() {
+  const v = { rutinas: cRutinas, ingredientes: cIngredientes, recetas: cRecetas, ajustes: cAjustes };
+  return `
+  <header><div class="tag">MODO CONFIGURACIÓN</div><h1>Configurar</h1>
+    <div class="subnav">${[['rutinas', 'Rutinas'], ['ingredientes', 'Ingredientes'], ['recetas', 'Recetas'], ['ajustes', 'Ajustes y copia']].map(([k, t]) => `<button class="${ui.cfg === k ? 'on' : ''}" data-a="cfg" data-v="${k}">${t}</button>`).join('')}</div>
+  </header>
+  <div class="wrap">${v[ui.cfg]()}</div>`;
+}
+const rutinaAct = () => db.rutinas.find(r => r.id === ui.rutina);
+const sesionAct = () => rutinaAct()?.sesiones.find(s => s.id === ui.sesion);
+const recetaAct = () => db.recetas.find(r => r.id === ui.rec);
+
+function cRutinas() {
+  const r = rutinaAct(), s = sesionAct();
+  if (!r) return `
+    ${db.rutinas.map(x => `<div class="card between"><div><b>${esc(x.nombre)}</b><div class="muted">${x.sesiones.length} sesiones</div></div>
+      <div class="row"><button class="btn2" data-a="openRutina" data-id="${x.id}">Abrir</button><button class="ico danger" data-a="delRutina" data-id="${x.id}" aria-label="Borrar rutina">✕</button></div></div>`).join('') || '<p class="muted">Aún no tienes rutinas. Crea la primera.</p>'}
+    <div class="card"><label>Nueva rutina<input id="nRutina" placeholder="p. ej. Rutina volumen"></label><button class="btn w100" style="margin-top:10px" data-a="addRutina">Añadir rutina</button></div>`;
+  if (!s) return `
+    <div class="crumbs"><button class="link" data-a="back" data-v="rutinas">Rutinas</button> › ${esc(r.nombre)}</div>
+    ${r.sesiones.map(x => `<div class="card between"><div><b>${esc(x.nombre)}</b><div class="muted">${x.ejercicios.length} ejercicios</div></div>
+      <div class="row"><button class="btn2" data-a="openSesion" data-id="${x.id}">Abrir</button><button class="ico danger" data-a="delSesion" data-id="${x.id}" aria-label="Borrar sesión">✕</button></div></div>`).join('') || '<p class="muted">Esta rutina aún no tiene sesiones.</p>'}
+    <div class="card"><label>Nueva sesión<input id="nSesion" placeholder="p. ej. Sesión 1 · Pecho"></label><button class="btn w100" style="margin-top:10px" data-a="addSesion">Añadir sesión</button></div>`;
+  const e = ui.editEj ? s.ejercicios.find(x => x.id === ui.editEj) : null, foto = ui.fotoTmp ?? e?.foto ?? '';
+  return `
+    <div class="crumbs"><button class="link" data-a="back" data-v="rutinas">Rutinas</button> › <button class="link" data-a="back" data-v="rutina">${esc(r.nombre)}</button> › ${esc(s.nombre)}</div>
+    ${s.ejercicios.map((x, i) => `<div class="card">
+      <div class="row" style="flex-wrap:nowrap"><div class="thumb">${x.foto ? `<img src="${x.foto}" alt="">` : 'Sin foto'}</div>
+        <div class="grow"><b>${i + 1}. ${esc(x.nombre)}</b><div class="muted">${x.series} × ${esc(x.reps)} · ${x.dSerie} s series · ${x.dEj} s siguiente</div></div></div>
+      <div class="row" style="margin-top:10px"><button class="ico" data-a="moveEj" data-id="${x.id}" data-d="-1" aria-label="Subir">↑</button><button class="ico" data-a="moveEj" data-id="${x.id}" data-d="1" aria-label="Bajar">↓</button>
+        <button class="btn2" data-a="editEj" data-id="${x.id}">Editar</button><button class="danger" data-a="delEj" data-id="${x.id}">Borrar</button></div>
+    </div>`).join('') || '<p class="muted">Esta sesión aún no tiene ejercicios.</p>'}
+    <div class="card" id="formEj"><h2>${e ? 'Editar ejercicio' : 'Nuevo ejercicio'}</h2>
+      <div class="row" style="flex-wrap:nowrap;align-items:flex-end;margin-bottom:10px">
+        <label class="thumb" id="fotoPrev" style="cursor:pointer;width:64px;height:64px">${foto ? `<img src="${foto}" alt="">` : '+ Foto'}<input type="file" accept="image/*" data-c="fotoEj" hidden></label>
+        <label class="grow">Nombre<input id="fNombre" value="${esc(e?.nombre)}" placeholder="Press de banca"></label>
+      </div>
+      <div class="g2">
+        <label>Series<input id="fSeries" type="number" min="1" inputmode="numeric" value="${e?.series ?? 3}"></label>
+        <label>Repeticiones<input id="fReps" value="${esc(e?.reps ?? '10')}" placeholder="8–10"></label>
+        <label>Descanso entre series (s)<input id="fDSerie" type="number" min="0" inputmode="numeric" value="${e?.dSerie ?? 90}"></label>
+        <label>Descanso al siguiente (s)<input id="fDEj" type="number" min="0" inputmode="numeric" value="${e?.dEj ?? 120}"></label>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="btn grow" data-a="saveEj">${e ? 'Guardar cambios' : 'Añadir ejercicio'}</button>${e ? '<button class="btn2" data-a="cancelEj">Cancelar</button>' : ''}</div>
+    </div>`;
+}
+
+function listaIng() {
+  const q = ui.buscar.trim().toLowerCase(), L = ingOrdenados().filter(i => !q || i.nombre.toLowerCase().includes(q));
+  return L.map(i => `<div class="card" style="padding:12px">
+    <div class="row" style="flex-wrap:nowrap"><input class="grow" data-c="ing" data-id="${i.id}" data-f="nombre" value="${esc(i.nombre)}" aria-label="Nombre"><button class="ico danger" data-a="delIng" data-id="${i.id}" aria-label="Borrar ${esc(i.nombre)}">✕</button></div>
+    <div class="g3" style="margin-top:8px">${[['kcal', 'kcal'], ['prot', 'Proteína g'], ['grasa', 'Grasa g']].map(([f, n]) => `<label>${n}<input data-c="ing" data-id="${i.id}" data-f="${f}" value="${i[f]}" inputmode="decimal"></label>`).join('')}</div>
+  </div>`).join('') || `<p class="muted">${q ? 'Ningún ingrediente coincide.' : 'Aún no hay ingredientes.'}</p>`;
+}
+function cIngredientes() {
+  return `
+    <div class="card"><h2>Nuevo ingrediente <span class="muted" style="font-weight:400">(por 100 g)</span></h2>
+      <label>Nombre<input id="iNombre" placeholder="p. ej. Arroz blanco"></label>
+      <div class="g3" style="margin-top:8px"><label>kcal<input id="iKcal" inputmode="decimal" placeholder="0"></label><label>Proteína g<input id="iProt" inputmode="decimal" placeholder="0"></label><label>Grasa g<input id="iGrasa" inputmode="decimal" placeholder="0"></label></div>
+      <button class="btn w100" style="margin-top:10px" data-a="addIng">Añadir ingrediente</button>
+    </div>
+    <div class="between"><b>${db.ingredientes.length} ingredientes</b></div>
+    <input data-c="buscar" value="${esc(ui.buscar)}" placeholder="Buscar ingrediente" aria-label="Buscar ingrediente">
+    <div id="ingList" style="display:flex;flex-direction:column;gap:10px">${listaIng()}</div>`;
+}
+
+function cRecetas() {
+  const r = recetaAct();
+  if (!r) return `
+    ${db.recetas.map(x => { const t = calcReceta(x); return `<div class="card between"><div><b>${esc(x.nombre)}</b><div class="muted">${fmt(t.g)} g · ${fmt(t.kcal)} kcal · ${fmt(t.prot, 1)} P · ${fmt(t.grasa, 1)} G</div></div>
+      <div class="row" style="flex-wrap:nowrap"><button class="btn2" data-a="openRec" data-id="${x.id}">Abrir</button><button class="ico danger" data-a="delRec" data-id="${x.id}" aria-label="Borrar receta">✕</button></div></div>`; }).join('') || '<p class="muted">Aún no tienes recetas.</p>'}
+    ${db.ingredientes.length ? '' : '<p class="muted">Primero añade ingredientes: las recetas se montan con ellos.</p>'}
+    <div class="card"><label>Nueva receta<input id="nRec" placeholder="p. ej. Pollo al curry"></label><button class="btn w100" style="margin-top:10px" data-a="addRec">Crear receta</button></div>`;
+  const t = calcReceta(r), p = t.g ? 100 / t.g : 0;
+  const ops = sel => ingOrdenados().map(i => `<option value="${i.id}" ${i.id === sel ? 'selected' : ''}>${esc(i.nombre)}</option>`).join('');
+  return `
+    <div class="crumbs"><button class="link" data-a="closeRec">Recetas</button> › ${esc(r.nombre)}</div>
+    <div class="card"><label>Nombre de la receta<input data-c="recName" value="${esc(r.nombre)}"></label></div>
+    ${r.items.map((it, i) => { const ing = ingPorId(it.ing), f = num(it.g) / 100; return `<div class="card" style="padding:12px">
+      <div class="row" style="flex-wrap:nowrap"><select class="grow" data-c="item" data-i="${i}" data-f="ing" aria-label="Ingrediente">${ops(it.ing)}</select>
+        <input style="width:84px" data-c="item" data-i="${i}" data-f="g" value="${it.g}" inputmode="decimal" aria-label="Gramos"><span class="muted">g</span>
+        <button class="ico danger" data-a="delItem" data-i="${i}" aria-label="Quitar">✕</button></div>
+      <div class="muted" style="margin-top:6px">${ing ? `${fmt(ing.kcal * f)} kcal · ${fmt(ing.prot * f, 1)} g prot · ${fmt(ing.grasa * f, 1)} g grasa` : 'Ingrediente borrado'}</div>
+    </div>`; }).join('')}
+    <div class="card"><h2>Añadir ingrediente</h2>
+      <div class="row" style="flex-wrap:nowrap"><select class="grow" id="rIng" aria-label="Ingrediente"><option value="">Elige…</option>${ops(null)}</select><input style="width:84px" id="rG" placeholder="g" inputmode="decimal" aria-label="Gramos"></div>
+      <button class="btn w100" style="margin-top:10px" data-a="addItem">Añadir</button>
+    </div>
+    <div class="card"><h2>Total de la receta</h2>
+      <div class="g2"><div class="pill">Peso total<b>${fmt(t.g)} g</b></div><div class="pill">Calorías<b>${fmt(t.kcal)} kcal</b></div><div class="pill">Proteína<b>${fmt(t.prot, 1)} g</b></div><div class="pill">Grasa<b>${fmt(t.grasa, 1)} g</b></div></div>
+      <p class="muted" style="margin:10px 0 0">Por 100 g: ${fmt(t.kcal * p)} kcal · ${fmt(t.prot * p, 1)} g prot · ${fmt(t.grasa * p, 1)} g grasa</p>
+    </div>`;
+}
+
+function cAjustes() {
+  return `
+    <div class="card"><h2>Objetivo diario</h2><label>Tope de calorías (kcal)<input type="number" inputmode="numeric" min="0" data-c="tope" value="${db.ajustes.topeKcal}"></label></div>
+    <div class="card"><h2>Copia de seguridad</h2>
+      <p class="muted" style="margin-top:0">Guarda una copia de todo (configuración, comidas, entrenos, peso, medidas y fotos) en un archivo. Hazlo de vez en cuando y guárdala en Drive.</p>
+      <button class="btn w100" data-a="export" data-v="completa">Exportar copia completa</button>
+      <button class="btn2 w100" style="margin-top:8px" data-a="export" data-v="config">Exportar solo configuración</button>
+    </div>
+    <div class="card"><h2>Importar</h2>
+      <p class="muted" style="margin-top:0">· Archivo de <b>configuración</b> (también el del ordenador): sustituye rutinas, ingredientes, recetas y tope, y <b>mantiene</b> tus registros.<br>· <b>Copia completa</b>: lo sustituye todo.</p>
+      <label class="btn2" style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:10px;font-size:15px;cursor:pointer">Elegir archivo…<input type="file" accept="application/json,.json" data-c="import" hidden></label>
+    </div>
+    <p class="muted" style="text-align:center">${db.rutinas.length} rutinas · ${db.ingredientes.length} ingredientes · ${db.recetas.length} recetas · ${db.entrenos.length} entrenos</p>`;
+}
+
+/* ======================= Sesión de entreno ======================= */
+let wl = null, audio = null;
+async function pedirPantalla() {
+  try { if ('wakeLock' in navigator && db.activo && !wl && document.visibilityState === 'visible') { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => wl = null); } } catch {}
+}
+function soltarPantalla() { try { wl?.release(); } catch {} wl = null; }
+function initAudio() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume?.(); } catch {} }
+function pitido() {
+  try { navigator.vibrate?.([300, 150, 300, 150, 300]); } catch {}
+  if (!audio) return;
+  try { [0, .25, .5].forEach(t => { const o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = 880; g.gain.value = .25;
+    o.connect(g); g.connect(audio.destination); o.start(audio.currentTime + t); o.stop(audio.currentTime + t + .15); }); } catch {}
+}
+function pintarBanner() {
+  const b = document.getElementById('banner'), d = db.activo?.descanso; if (!b) return;
+  b.innerHTML = d ? `<div class="descanso"><div class="between"><span style="font-weight:600">Descanso ${d.tipo === 'ej' ? 'al siguiente ejercicio' : 'entre series'}</span><span class="t" id="dT"></span></div>
+    <div class="bar"><div id="dW" style="width:100%"></div></div>
+    <div class="row"><button class="btn2" data-a="dMas">+15 s</button><button class="btn3" data-a="dSkip" style="background:#1E4FC0">Saltar</button></div></div>` : '';
+}
+function tick() {
+  const a = db.activo; if (!a) return;
+  const c = document.getElementById('crono'); if (c) c.textContent = mmss((Date.now() - a.inicio) / 1000);
+  if (a.descanso) {
+    const r = (a.descanso.fin - Date.now()) / 1000;
+    if (r <= 0) { a.descanso = null; guardar(); pintarBanner(); if (document.visibilityState === 'visible' && r > -5) pitido(); return; }
+    const t = document.getElementById('dT'), w = document.getElementById('dW');
+    if (t) t.textContent = mmss(Math.ceil(r)); if (w) w.style.width = (r / a.descanso.total * 100) + '%';
+  }
+}
+setInterval(tick, 500);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { pedirPantalla(); tick(); } });
+
+function empezar(rid, sid) {
+  const r = db.rutinas.find(x => x.id === rid), s = r?.sesiones.find(x => x.id === sid); if (!s) return;
+  if (db.activo && !confirm('Ya tienes una sesión en curso. ¿Descartarla y empezar esta?')) return;
+  initAudio();
+  db.activo = { id: uid(), rutina: r.nombre, sesionId: s.id, nombre: s.nombre, inicio: Date.now(), descanso: null,
+    ejercicios: s.ejercicios.map(e => {
+      const u = ultimoDe(e.id);
+      return { ejId: e.id, nombre: e.nombre, foto: e.foto, reps: e.reps, dSerie: e.dSerie, dEj: e.dEj,
+        series: [...Array(e.series)].map((_, i) => ({ kg: '', reps: '', hecha: false,
+          phKg: u ? fmt((u.series[i] || u.series[u.series.length - 1]).kg, 1) : '', phReps: u ? String((u.series[i] || u.series[u.series.length - 1]).reps) : String(parseInt(e.reps) || '') })) };
+    }) };
+  ui.tab = 'entreno'; guardar(); render(); window.scrollTo(0, 0); pedirPantalla();
+}
+
+/* ======================= Acciones ======================= */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]'); if (!b) return;
+  const A = b.dataset.a, id = b.dataset.id, V = b.dataset.v;
+  const val = k => (document.getElementById(k)?.value ?? '').trim();
+  const r = rutinaAct(), s = sesionAct(), rc = recetaAct(), a = db.activo;
+
+  switch (A) {
+    case 'tab': ui.tab = V; render(); window.scrollTo(0, 0); break;
+    case 'irDia': ui.tab = 'ali'; ui.vista = 'dia'; ui.fecha = V; render(); window.scrollTo(0, 0); break;
+    case 'vista': ui.vista = V; render(); break;
+    case 'mover': {
+      const n = Number(V);
+      if (ui.vista === 'dia') ui.fecha = sumarDias(ui.fecha, n);
+      else if (ui.vista === 'semana') ui.fecha = sumarDias(ui.fecha, 7 * n);
+      else { const d = fd(ui.fecha); d.setDate(1); d.setMonth(d.getMonth() + n); ui.fecha = fechaStr(d); }
+      render(); break;
+    }
+    case 'meal': ui.abierta = ui.abierta === V ? null : V; render(); if (ui.abierta) document.getElementById('aNom')?.focus(); break;
+    case 'addAli': {
+      const al = buscarAlimento(val('aNom')), g = num(val('aG'));
+      if (!al) return toast('Elige un ingrediente o receta de tu lista.');
+      if (g <= 0) return toast('Pon los gramos.');
+      const f = g / 100;
+      cambio(() => { const d = db.comidas[ui.fecha] = db.comidas[ui.fecha] || {}; (d[V] = d[V] || []).push({ nombre: al.nombre, g, kcal: al.kcal * f, prot: al.prot * f, grasa: al.grasa * f }); });
+      document.getElementById('aNom')?.focus(); break;
+    }
+    case 'delAli': cambio(() => db.comidas[ui.fecha][V].splice(Number(b.dataset.i), 1)); break;
+
+    case 'start': empezar(b.dataset.r, b.dataset.s); break;
+    case 'chk': {
+      const ei = Number(b.dataset.e), ej = a.ejercicios[ei], se = ej.series[Number(b.dataset.s)];
+      if (se.hecha) { cambio(() => se.hecha = false); break; }
+      initAudio();
+      cambio(() => {
+        if (se.kg === '') se.kg = se.phKg; if (se.reps === '') se.reps = se.phReps;
+        se.hecha = true;
+        const quedan = ej.series.some(x => !x.hecha), ultimo = ei === a.ejercicios.length - 1;
+        const seg = quedan ? ej.dSerie : (!ultimo ? ej.dEj : 0);
+        a.descanso = seg > 0 ? { fin: Date.now() + seg * 1000, total: seg, tipo: quedan ? 'serie' : 'ej' } : null;
+      });
+      pedirPantalla(); break;
+    }
+    case 'addSet': { const ej = a.ejercicios[Number(b.dataset.e)], l = ej.series[ej.series.length - 1] || {}; cambio(() => ej.series.push({ kg: '', reps: '', hecha: false, phKg: l.kg || l.phKg || '', phReps: l.reps || l.phReps || '' })); break; }
+    case 'dMas': a.descanso.fin += 15000; a.descanso.total += 15; guardar(); tick(); break;
+    case 'dSkip': a.descanso = null; guardar(); pintarBanner(); break;
+    case 'terminar': {
+      const ejs = a.ejercicios.map(x => ({ ejId: x.ejId, nombre: x.nombre, series: x.series.filter(z => z.hecha).map(z => ({ kg: num(z.kg), reps: num(z.reps) })) })).filter(x => x.series.length);
+      if (!ejs.length) { if (confirm('No has marcado ninguna serie. ¿Descartar la sesión?')) { cambio(() => db.activo = null); soltarPantalla(); } break; }
+      if (!confirm('¿Terminar y guardar la sesión?')) break;
+      cambio(() => { db.entrenos.push({ id: a.id, fecha: fechaStr(new Date(a.inicio)), rutina: a.rutina, sesionId: a.sesionId, nombre: a.nombre, duracion: Math.round((Date.now() - a.inicio) / 1000), ejercicios: ejs }); db.activo = null; });
+      soltarPantalla(); window.scrollTo(0, 0); toast('Sesión guardada'); break;
+    }
+    case 'cancelSes': if (confirm('¿Descartar esta sesión sin guardar?')) { cambio(() => db.activo = null); soltarPantalla(); } break;
+    case 'delEnt': if (confirm('¿Borrar este entreno del historial?')) cambio(() => db.entrenos = db.entrenos.filter(x => x.id !== id)); break;
+
+    case 'peso': {
+      const kg = num(val('pKg')); if (kg <= 0) return toast('Escribe tu peso.');
+      cambio(() => { db.peso = db.peso.filter(p => p.fecha !== hoy()); db.peso.push({ fecha: hoy(), kg }); db.peso.sort((x, y) => x.fecha.localeCompare(y.fecha)); });
+      toast('Peso guardado'); break;
+    }
+    case 'delPeso': cambio(() => db.peso = db.peso.filter(p => p.fecha !== V)); break;
+    case 'med': ui.med = V; render(); break;
+    case 'medidas': {
+      const m = { fecha: hoy() }; let alguna = false;
+      MEDIDAS.forEach(([k]) => { const v = val('m_' + k); if (v) { m[k] = num(v); alguna = true; } });
+      if (!alguna) return toast('Rellena al menos una medida.');
+      cambio(() => { const prev = db.medidas.find(x => x.fecha === hoy()); if (prev) Object.assign(prev, m); else db.medidas.push(m); db.medidas.sort((x, y) => x.fecha.localeCompare(y.fecha)); });
+      toast('Medidas guardadas'); break;
+    }
+    case 'selFoto': ui.comp = ui.comp.includes(id) ? ui.comp.filter(x => x !== id) : [...ui.comp, id].slice(-2); render(); break;
+    case 'noSel': ui.comp = []; render(); break;
+    case 'delFotos': if (confirm('¿Borrar las fotos seleccionadas?')) cambio(() => { db.fotos = db.fotos.filter(f => !ui.comp.includes(f.id)); ui.comp = []; }); break;
+
+    case 'cfg': ui.cfg = V; ui.rutina = ui.sesion = ui.editEj = ui.rec = null; ui.fotoTmp = null; render(); break;
+    case 'back': if (V === 'rutinas') ui.rutina = null; ui.sesion = ui.editEj = null; ui.fotoTmp = null; render(); break;
+    case 'addRutina': { const n = val('nRutina'); if (!n) return toast('Escribe el nombre de la rutina.'); cambio(() => db.rutinas.push({ id: uid(), nombre: n, sesiones: [] })); break; }
+    case 'openRutina': ui.rutina = id; render(); break;
+    case 'delRutina': if (confirm('¿Borrar esta rutina con todas sus sesiones?')) cambio(() => db.rutinas = db.rutinas.filter(x => x.id !== id)); break;
+    case 'addSesion': { const n = val('nSesion'); if (!n) return toast('Escribe el nombre de la sesión.'); cambio(() => r.sesiones.push({ id: uid(), nombre: n, ejercicios: [] })); break; }
+    case 'openSesion': ui.sesion = id; render(); break;
+    case 'delSesion': if (confirm('¿Borrar esta sesión con todos sus ejercicios?')) cambio(() => r.sesiones = r.sesiones.filter(x => x.id !== id)); break;
+    case 'saveEj': {
+      const nombre = val('fNombre'); if (!nombre) return toast('Ponle nombre al ejercicio.');
+      const d = { nombre, series: Math.max(1, parseInt(val('fSeries')) || 1), reps: val('fReps') || '10', dSerie: Math.max(0, parseInt(val('fDSerie')) || 0), dEj: Math.max(0, parseInt(val('fDEj')) || 0) };
+      cambio(() => {
+        if (ui.editEj) { const x = s.ejercicios.find(x => x.id === ui.editEj); Object.assign(x, d); if (ui.fotoTmp !== null) x.foto = ui.fotoTmp; }
+        else s.ejercicios.push({ id: uid(), foto: ui.fotoTmp || '', ...d });
+        ui.editEj = null; ui.fotoTmp = null;
+      });
+      toast('Ejercicio guardado'); break;
+    }
+    case 'editEj': ui.editEj = id; ui.fotoTmp = null; render(); document.getElementById('formEj')?.scrollIntoView({ behavior: 'smooth' }); break;
+    case 'cancelEj': ui.editEj = null; ui.fotoTmp = null; render(); break;
+    case 'delEj': if (confirm('¿Borrar este ejercicio?')) cambio(() => s.ejercicios = s.ejercicios.filter(x => x.id !== id)); break;
+    case 'moveEj': cambio(() => { const i = s.ejercicios.findIndex(x => x.id === id), j = i + Number(b.dataset.d); if (j >= 0 && j < s.ejercicios.length) [s.ejercicios[i], s.ejercicios[j]] = [s.ejercicios[j], s.ejercicios[i]]; }); break;
+    case 'addIng': {
+      const n = val('iNombre'); if (!n) return toast('Escribe el nombre del ingrediente.');
+      if (db.ingredientes.some(i => i.nombre.toLowerCase() === n.toLowerCase())) return toast('Ya tienes un ingrediente con ese nombre.');
+      cambio(() => db.ingredientes.push({ id: uid(), nombre: n, kcal: num(val('iKcal')), prot: num(val('iProt')), grasa: num(val('iGrasa')) }));
+      toast('Ingrediente añadido'); document.getElementById('iNombre')?.focus(); break;
+    }
+    case 'delIng': {
+      const usos = db.recetas.filter(x => x.items.some(it => it.ing === id)).length;
+      if (confirm(usos ? `Está en ${usos} receta(s) y desaparecerá de ellas. ¿Borrarlo?` : '¿Borrar este ingrediente?'))
+        cambio(() => { db.ingredientes = db.ingredientes.filter(x => x.id !== id); db.recetas.forEach(x => x.items = x.items.filter(it => it.ing !== id)); });
+      break;
+    }
+    case 'addRec': { const n = val('nRec'); if (!n) return toast('Escribe el nombre de la receta.'); const nid = uid(); cambio(() => { db.recetas.push({ id: nid, nombre: n, items: [] }); ui.rec = nid; }); break; }
+    case 'openRec': ui.rec = id; render(); window.scrollTo(0, 0); break;
+    case 'closeRec': ui.rec = null; render(); break;
+    case 'delRec': if (confirm('¿Borrar esta receta?')) cambio(() => db.recetas = db.recetas.filter(x => x.id !== id)); break;
+    case 'addItem': { const ing = val('rIng'), g = num(val('rG')); if (!ing || g <= 0) return toast('Elige un ingrediente y pon los gramos.'); cambio(() => rc.items.push({ ing, g })); break; }
+    case 'delItem': cambio(() => rc.items.splice(Number(b.dataset.i), 1)); break;
+    case 'export': exportar(V); break;
+  }
+});
+
+function exportar(tipo) {
+  const base = tipo === 'config'
+    ? { version: 1, tipo: 'config', ajustes: db.ajustes, rutinas: db.rutinas, ingredientes: db.ingredientes, recetas: db.recetas }
+    : { ...db, tipo: 'completa', activo: null };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify({ ...base, exportado: new Date().toISOString() })], { type: 'application/json' }));
+  a.download = `app-fitness-${tipo}-${hoy()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.id === 'aNom' || el.id === 'aG') {
+    const al = buscarAlimento(document.getElementById('aNom').value), g = num(document.getElementById('aG').value), p = document.getElementById('aPrev');
+    if (!al) { p.className = 'muted'; p.innerHTML = 'Elige un alimento de tu lista y pon los gramos.'; return; }
+    const f = g / 100;
+    p.className = 'g3';
+    p.innerHTML = g > 0 ? `<div class="pill"><b style="color:var(--blue)">${fmt(al.kcal * f)}</b>kcal</div><div class="pill"><b>${fmt(al.prot * f, 1)} g</b>proteína</div><div class="pill"><b>${fmt(al.grasa * f, 1)} g</b>grasa</div>`
+      : `<div class="pill" style="grid-column:span 3">${esc(al.nombre)}: ${fmt(al.kcal)} kcal por 100 g</div>`;
+  } else if (el.dataset.c === 'buscar') {
+    ui.buscar = el.value; document.getElementById('ingList').innerHTML = listaIng();
+  }
+});
+
+document.addEventListener('change', async e => {
+  const el = e.target, c = el.dataset.c; if (!c) return;
+  if (c === 'set') { const se = db.activo.ejercicios[Number(el.dataset.e)].series[Number(el.dataset.s)]; se[el.dataset.f] = el.value.trim(); guardar(); }
+  else if (c === 'prog') { ui.prog = el.value; render(); }
+  else if (c === 'ing') { const i = ingPorId(el.dataset.id), f = el.dataset.f; i[f] = f === 'nombre' ? (el.value.trim() || i.nombre) : num(el.value); guardar(); }
+  else if (c === 'recName') { const rc = recetaAct(); rc.nombre = el.value.trim() || rc.nombre; guardar(); }
+  else if (c === 'item') { const it = recetaAct().items[Number(el.dataset.i)]; if (el.dataset.f === 'g') it.g = num(el.value); else it.ing = el.value; cambio(() => {}); }
+  else if (c === 'tope') { db.ajustes.topeKcal = Math.max(0, parseInt(el.value) || 0); guardar(); toast('Tope guardado'); }
+  else if (c === 'fotoEj') {
+    const f = el.files[0]; if (!f) return;
+    try { ui.fotoTmp = await leerFoto(f, 400); document.getElementById('fotoPrev').firstChild.replaceWith(Object.assign(new Image(), { src: ui.fotoTmp, alt: '' })); }
+    catch { toast('No se ha podido leer la foto.'); }
+  } else if (c === 'foto') {
+    const f = el.files[0]; if (!f) return;
+    try { const img = await leerFoto(f, 900); cambio(() => db.fotos.push({ id: uid(), fecha: hoy(), img })); toast('Foto guardada'); }
+    catch { toast('No se ha podido leer la foto.'); }
+  } else if (c === 'import') {
+    const f = el.files[0]; if (!f) return;
+    try {
+      const d = JSON.parse(await f.text());
+      if (!Array.isArray(d.rutinas) || !Array.isArray(d.ingredientes) || !Array.isArray(d.recetas)) throw 0;
+      const completa = d.tipo === 'completa' || 'comidas' in d;
+      const msg = completa ? 'Es una copia completa: sustituirá TODOS los datos de este móvil. ¿Continuar?'
+        : `Configuración con ${d.rutinas.length} rutinas, ${d.ingredientes.length} ingredientes y ${d.recetas.length} recetas.\nSustituirá tu configuración actual y mantendrá tus registros. ¿Continuar?`;
+      if (confirm(msg)) {
+        const aj = { ...NUEVO().ajustes, ...(d.ajustes || {}) };
+        if (completa) { const { tipo, exportado, ...resto } = d; db = { ...NUEVO(), ...resto, ajustes: aj }; }
+        else db = { ...db, ajustes: aj, rutinas: d.rutinas, ingredientes: d.ingredientes, recetas: d.recetas };
+        await guardar(); render(); toast('Datos importados');
+      }
+    } catch { toast('Ese archivo no es válido para la app.'); }
+    el.value = '';
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.target.matches('input:not([data-c])')) return;
+  e.preventDefault(); e.target.closest('.card, .addbox')?.querySelector('.btn')?.click();
+});
+
+/* ======================= Arranque ======================= */
+(async () => {
+  try { const d = await cargar(); if (d) db = { ...NUEVO(), ...d }; } catch { toast('No se ha podido abrir el almacenamiento.'); }
+  if (db.activo) { ui.tab = 'entreno'; pedirPantalla(); }
+  render();
+  try { await navigator.storage?.persist?.(); } catch {}
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
