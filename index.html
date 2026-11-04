@@ -98,6 +98,21 @@
   #tabs { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #D5DBE3; display: grid; grid-template-columns: repeat(5, 1fr); padding: 4px 2px calc(6px + env(safe-area-inset-bottom)); z-index: 10; }
   #tabs button { background: none; color: var(--muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; min-height: 54px; }
   #tabs button.on { color: var(--blue); font-weight: 600; }
+  .seg.light { background: #fff; margin: 0; }
+  .seg.light button { color: var(--muted); }
+  .seg.light button.on { color: #fff; }
+  .tabla { max-height: 290px; overflow-y: auto; background: #fff; border-radius: 10px; }
+  .trow { display: grid; grid-template-columns: 1fr 50px 42px 42px; gap: 6px; align-items: center; width: 100%; background: none; border-radius: 0; padding: 10px 12px; min-height: 46px; text-align: left; font-size: 14px; color: var(--text); border-bottom: 1px solid var(--line); }
+  .trow span:not(:first-child) { text-align: right; color: var(--muted); }
+  .trow.th { font-size: 11px; font-weight: 600; color: var(--muted); position: sticky; top: 0; background: #fff; min-height: 0; padding: 8px 12px; }
+  .trow.on { background: var(--blue-l); font-weight: 600; }
+  .menu { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+  .menu button { background: none; text-align: left; padding: 0 16px; border-radius: 0; border-bottom: 1px solid var(--line); color: var(--text); min-height: 48px; }
+  .menu button.danger { color: var(--rojo); border-bottom: 0; }
+  .foto.vacia { border: 2px dashed var(--blue-m); cursor: pointer; }
+  .foto .vac { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--blue-d); font-weight: 600; font-size: 13px; }
+  .mini { width: 44px; height: 58px; border-radius: 6px; object-fit: cover; background: var(--blue-l); display: block; }
+  .comp .nf { aspect-ratio: 3 / 4; border-radius: 10px; background: var(--blue-l); color: var(--blue-d); display: flex; align-items: center; justify-content: center; font-size: 13px; }
   #toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; z-index: 20; display: none; max-width: 90vw; }
 </style>
 </head>
@@ -112,7 +127,8 @@ const NUEVO = () => ({ version: 1, ajustes: { topeKcal: 2000 }, rutinas: [], ing
 let db = NUEVO();
 
 const COMIDAS = [['desayuno', 'Desayuno'], ['media', 'Media mañana'], ['comida', 'Comida'], ['merienda', 'Merienda'], ['cena', 'Cena']];
-const MEDIDAS = [['cintura', 'Cintura'], ['pecho', 'Pecho'], ['brazo', 'Brazo'], ['muslo', 'Muslo']];
+const MEDIDAS = [['barriga', 'Barriga'], ['cintura', 'Cintura'], ['cadera', 'Cadera']];
+const POSES = [['perfil', 'Perfil'], ['frente', 'Frente'], ['espalda', 'Espalda']];
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
@@ -132,7 +148,8 @@ const lunes = f => sumarDias(f, -((fd(f).getDay() + 6) % 7));
 const mmss = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return (h ? h + ':' + z2(m) : m) + ':' + z2(s % 60); };
 
 let ui = { tab: 'inicio', fecha: hoy(), vista: 'dia', abierta: null, cfg: 'rutinas', rutina: null, sesion: null,
-  editEj: null, fotoTmp: null, rec: null, buscar: '', prog: '', med: 'cintura', comp: [] };
+  editEj: null, fotoTmp: null, rec: null, buscar: '', prog: '', med: 'cintura',
+  aliTab: 'ing', aliBus: '', aliSel: null, ingSel: null, ingModo: null, compA: null, compB: null, compPose: 'frente' };
 
 /* Guardado en el móvil (IndexedDB) */
 let idb;
@@ -181,6 +198,20 @@ function buscarAlimento(txt) {
   const parc = [...db.ingredientes.filter(i => i.nombre.toLowerCase().startsWith(t)).map(i => ({ nombre: i.nombre, ...i })),
                 ...db.recetas.filter(r => r.nombre.toLowerCase().startsWith(t)).map(deRec)];
   return parc.length === 1 ? parc[0] : null;
+}
+function porCienReceta(r) { const c = calcReceta(r), p = c.g ? 100 / c.g : 0; return { nombre: r.nombre, kcal: c.kcal * p, prot: c.prot * p, grasa: c.grasa * p }; }
+function alimentoSel() {
+  const s = ui.aliSel; if (!s) return null;
+  if (s.tipo === 'rec') { const r = db.recetas.find(x => x.id === s.id); return r ? porCienReceta(r) : null; }
+  const i = ingPorId(s.id); return i ? { nombre: i.nombre, kcal: i.kcal, prot: i.prot, grasa: i.grasa } : null;
+}
+function listaAli() {
+  const q = ui.aliBus.trim().toLowerCase(), rec = ui.aliTab === 'rec';
+  const L = rec ? db.recetas.map(r => ({ id: r.id, ...porCienReceta(r) })) : ingOrdenados();
+  const F = L.filter(x => !q || x.nombre.toLowerCase().includes(q));
+  if (!F.length) return `<p class="muted" style="padding:10px 12px;margin:0">${L.length ? 'Nada coincide con la búsqueda.' : rec ? 'Aún no tienes recetas (créalas en Configurar).' : 'Aún no tienes ingredientes (añádelos en Configurar).'}</p>`;
+  return `<div class="trow th"><span>Nombre (por 100 g)</span><span>kcal</span><span>Prot</span><span>Grasa</span></div>` +
+    F.map(x => `<button class="trow ${ui.aliSel?.id === x.id ? 'on' : ''}" data-a="aliSel" data-id="${x.id}"><span>${esc(x.nombre)}</span><span>${fmt(x.kcal)}</span><span>${fmt(x.prot, 1)}</span><span>${fmt(x.grasa, 1)}</span></button>`).join('');
 }
 function diaTot(f) {
   const t = { kcal: 0, prot: 0, grasa: 0 }, d = db.comidas[f] || {};
@@ -291,8 +322,7 @@ function vAli() {
   let titulo, cuerpo;
   if (V === 'dia') {
     titulo = f === hoy() ? 'Hoy' : fechaLarga(f);
-    const dia = db.comidas[f] || {};
-    const opciones = [...ingOrdenados().map(i => i.nombre), ...db.recetas.map(r => 'Receta · ' + r.nombre)].map(n => `<option value="${esc(n)}"></option>`).join('');
+    const dia = db.comidas[f] || {}, sel = alimentoSel(), rec = ui.aliTab === 'rec';
     cuerpo = tarjetaCalorias(f) + COMIDAS.map(([k, n]) => {
       const items = dia[k] || [], kc = items.reduce((a, b) => a + b.kcal, 0), open = ui.abierta === k;
       return `<div class="card ${open ? 'sel' : ''}">
@@ -300,15 +330,19 @@ function vAli() {
         ${open ? `
           ${items.map((it, i) => `<div class="item"><span class="grow">${esc(it.nombre)} · ${fmt(it.g)} g<br><span class="muted">${fmt(it.prot, 1)} g prot · ${fmt(it.grasa, 1)} g grasa</span></span><b>${fmt(it.kcal)} kcal</b><button class="ico danger" data-a="delAli" data-v="${k}" data-i="${i}" aria-label="Quitar ${esc(it.nombre)}">✕</button></div>`).join('')}
           <div class="addbox">
-            ${db.ingredientes.length || db.recetas.length ? `
-            <div class="row" style="flex-wrap:nowrap">
-              <label class="grow">Ingrediente o receta<input id="aNom" list="alimentos" autocomplete="off" placeholder="Escribe para buscar"></label>
-              <label style="width:96px">Gramos<input id="aG" inputmode="decimal" placeholder="g"></label>
+            <div class="seg light" style="grid-template-columns:1fr 1fr">
+              <button class="${rec ? '' : 'on'}" data-a="aliTab" data-v="ing">Ingredientes</button>
+              <button class="${rec ? 'on' : ''}" data-a="aliTab" data-v="rec">Recetas</button>
             </div>
-            <datalist id="alimentos">${opciones}</datalist>
-            <div id="aPrev" class="muted">Elige un alimento de tu lista y pon los gramos.</div>
-            <button class="btn" data-a="addAli" data-v="${k}">Añadir a ${n.toLowerCase()}</button>` : `<span class="muted">Primero añade ingredientes en Configurar › Ingredientes.</span>`}
-          </div>` : ''}
+            <input data-c="aliBus" value="${esc(ui.aliBus)}" placeholder="Buscar ${rec ? 'receta' : 'ingrediente'}" aria-label="Buscar" autocomplete="off">
+            <div class="tabla" id="aliList">${listaAli()}</div>
+            ${sel ? `<div class="card" id="aliForm" style="padding:12px;display:flex;flex-direction:column;gap:10px">
+                <div class="between"><b>${esc(sel.nombre)}</b><span class="muted">${fmt(sel.kcal)} kcal / 100 g</span></div>
+                <div class="row" style="flex-wrap:nowrap"><label class="grow">¿Cuántos gramos?<input id="aG" inputmode="decimal" placeholder="g"></label><button class="btn" data-a="addAli" data-v="${k}" style="align-self:flex-end">Añadir</button></div>
+                <div id="aPrev"></div>
+              </div>` : '<p class="muted" style="margin:0">Toca un alimento de la tabla para añadirlo.</p>'}
+          </div>
+          <button class="btn3 w100" style="margin-top:10px" data-a="listo" data-v="${k}">Listo</button>` : ''}
       </div>`;
     }).join('');
   } else if (V === 'semana') {
@@ -390,7 +424,11 @@ function vPer() {
   const P = db.peso, pu = P[P.length - 1], M = db.medidas, mu = M[M.length - 1], mp = M[M.length - 2];
   const ptsPeso = P.slice(-30).map(p => ({ x: corta(p.fecha), y: p.kg }));
   const ptsMed = M.filter(m => m[ui.med] != null).map(m => ({ x: corta(m.fecha), y: m[ui.med] }));
-  const comp = ui.comp.map(id => db.fotos.find(f => f.id === id)).filter(Boolean);
+  const F = db.fotos, fh = F.find(f => f.fecha === hoy()) || {};
+  if (!F.some(f => f.fecha === ui.compA)) ui.compA = F[0]?.fecha || null;
+  if (!F.some(f => f.fecha === ui.compB)) ui.compB = F[F.length - 1]?.fecha || null;
+  const opF = s => F.map(f => `<option value="${f.fecha}" ${f.fecha === s ? 'selected' : ''}>${corta(f.fecha)} ${f.fecha.slice(0, 4)}</option>`).join('');
+  const verF = fecha => { const f = F.find(x => x.fecha === fecha), img = f?.[ui.compPose]; return img ? `<img src="${img}" alt="${ui.compPose} ${corta(fecha)}">` : '<div class="nf">Sin foto</div>'; };
   return `
   <header><div class="sub">Tu evolución</div><h1>Personal</h1></header>
   <div class="wrap">
@@ -402,21 +440,24 @@ function vPer() {
       ${P.length ? `<details style="margin-top:8px"><summary class="muted">Historial</summary>${P.slice(-10).reverse().map(p => `<div class="item"><span>${corta(p.fecha)}</span><span class="row"><b>${fmt(p.kg, 1)} kg</b><button class="ico danger" data-a="delPeso" data-v="${p.fecha}" aria-label="Borrar">✕</button></span></div>`).join('')}</details>` : ''}
     </div>
     <div class="card">
-      <h2>Medidas (cm)</h2>
-      ${mu ? `<div class="g2" style="margin-bottom:10px">${MEDIDAS.map(([k, n]) => { const d = mu[k] != null && mp && mp[k] != null ? mu[k] - mp[k] : null; return `<div class="pill">${n}<b>${mu[k] != null ? fmt(mu[k], 1) + ' cm' : '—'}</b>${d ? `${d > 0 ? '+' : '−'}${fmt(Math.abs(d), 1)} cm` : ''}</div>`; }).join('')}</div>
-        <div class="seg" style="grid-template-columns:repeat(4,1fr);background:var(--bg);margin:0 0 6px">${MEDIDAS.map(([k, n]) => `<button class="${ui.med === k ? 'on' : ''}" style="${ui.med === k ? '' : 'color:var(--muted)'}" data-a="med" data-v="${k}">${n}</button>`).join('')}</div>
+      <div class="between"><b>Medidas (cm)</b>${mu ? `<span class="muted">Última: ${corta(mu.fecha)}</span>` : ''}</div>
+      ${mu ? `<div class="g3" style="margin:10px 0">${MEDIDAS.map(([k, n]) => { const d = mu[k] != null && mp && mp[k] != null ? mu[k] - mp[k] : null; return `<div class="pill">${n}<b>${mu[k] != null ? fmt(mu[k], 1) : '—'}</b>${d ? `${d > 0 ? '+' : '−'}${fmt(Math.abs(d), 1)} cm` : ''}</div>`; }).join('')}</div>
+        <div class="seg light" style="grid-template-columns:repeat(3,1fr);background:var(--bg);margin:0 0 6px">${MEDIDAS.map(([k, n]) => `<button class="${ui.med === k ? 'on' : ''}" data-a="med" data-v="${k}">${n}</button>`).join('')}</div>
         ${linea(ptsMed)}` : '<p class="muted">Aún no has apuntado medidas.</p>'}
-      <div class="g2" style="margin-top:10px">${MEDIDAS.map(([k, n]) => `<label>${n}<input id="m_${k}" inputmode="decimal" placeholder="${mu && mu[k] != null ? fmt(mu[k], 1) : 'cm'}"></label>`).join('')}</div>
+      <div class="g3" style="margin-top:10px">${MEDIDAS.map(([k, n]) => `<label>${n}<input id="m_${k}" inputmode="decimal" placeholder="${mu && mu[k] != null ? fmt(mu[k], 1) : 'cm'}"></label>`).join('')}</div>
       <button class="btn w100" style="margin-top:10px" data-a="medidas">Guardar medidas de hoy</button>
+      ${M.length ? `<details style="margin-top:8px"><summary class="muted">Historial con fechas</summary>${[...M].reverse().slice(0, 15).map(m => `<div class="item"><span class="grow"><b>${corta(m.fecha)} ${m.fecha.slice(0, 4)}</b><br><span class="muted">${MEDIDAS.map(([k, n]) => `${n} ${m[k] != null ? fmt(m[k], 1) : '—'}`).join(' · ')}</span></span><button class="ico danger" data-a="delMed" data-v="${m.fecha}" aria-label="Borrar">✕</button></div>`).join('')}</details>` : ''}
     </div>
     <div class="card">
-      <div class="between"><b>Fotos de progreso</b><span class="muted">${comp.length === 2 ? '' : 'Toca 2 para comparar'}</span></div>
-      ${comp.length === 2 ? `<div class="comp" style="margin:10px 0">${comp.sort((a, b) => a.fecha.localeCompare(b.fecha)).map(f => `<div><img src="${f.img}" alt="Foto del ${corta(f.fecha)}"><div class="muted" style="text-align:center">${corta(f.fecha)}</div></div>`).join('')}</div>` : ''}
+      <div class="between"><b>Fotos de progreso</b><span class="muted">Hoy, ${corta(hoy())}</span></div>
       <div class="fotos" style="margin-top:10px">
-        ${[...db.fotos].reverse().map(f => `<button class="foto ${ui.comp.includes(f.id) ? 'sel' : ''}" data-a="selFoto" data-id="${f.id}" aria-label="Foto del ${corta(f.fecha)}"><img src="${f.img}" alt=""><span>${corta(f.fecha)}</span></button>`).join('')}
-        <label class="foto" style="display:flex;align-items:center;justify-content:center;border:2px dashed var(--blue-m);color:var(--blue-d);font-weight:600;font-size:13px;cursor:pointer">+ Nueva<input type="file" accept="image/*" data-c="foto" hidden></label>
+        ${POSES.map(([k, n]) => `<label class="foto ${fh[k] ? '' : 'vacia'}" style="cursor:pointer">${fh[k] ? `<img src="${fh[k]}" alt="${n} de hoy">` : `<div class="vac">+ ${n}</div>`}<span>${n}</span><input type="file" accept="image/*" data-c="foto" data-p="${k}" hidden></label>`).join('')}
       </div>
-      ${ui.comp.length ? `<div class="row" style="margin-top:10px"><button class="btn2" data-a="noSel">Quitar selección</button><button class="danger" data-a="delFotos">Borrar ${ui.comp.length === 1 ? 'foto' : 'fotos'}</button></div>` : ''}
+      <p class="muted" style="margin:8px 0 0">Toca un recuadro para hacer o cambiar la foto de hoy.</p>
+      ${F.length >= 2 ? `<h2 style="margin-top:16px">Comparar</h2>
+        <div class="seg light" style="grid-template-columns:repeat(3,1fr);background:var(--bg);margin-bottom:8px">${POSES.map(([k, n]) => `<button class="${ui.compPose === k ? 'on' : ''}" data-a="compPose" data-v="${k}">${n}</button>`).join('')}</div>
+        <div class="comp"><select data-c="compA" aria-label="Fecha antes">${opF(ui.compA)}</select><select data-c="compB" aria-label="Fecha después">${opF(ui.compB)}</select>${verF(ui.compA)}${verF(ui.compB)}</div>` : ''}
+      ${F.length ? `<details style="margin-top:10px"><summary class="muted">Historial con fechas</summary>${[...F].reverse().map(f => `<div class="item"><b style="width:64px">${corta(f.fecha)}<br><span class="muted" style="font-weight:400">${f.fecha.slice(0, 4)}</span></b><span class="row grow" style="flex-wrap:nowrap;gap:6px">${POSES.map(([k, n]) => f[k] ? `<img class="mini" src="${f[k]}" alt="${n}">` : '<div class="mini"></div>').join('')}</span><button class="ico danger" data-a="delFotoDia" data-v="${f.fecha}" aria-label="Borrar fotos de ese día">✕</button></div>`).join('')}</details>` : ''}
     </div>
   </div>`;
 }
@@ -471,10 +512,29 @@ function cRutinas() {
 
 function listaIng() {
   const q = ui.buscar.trim().toLowerCase(), L = ingOrdenados().filter(i => !q || i.nombre.toLowerCase().includes(q));
-  return L.map(i => `<div class="card" style="padding:12px">
-    <div class="row" style="flex-wrap:nowrap"><input class="grow" data-c="ing" data-id="${i.id}" data-f="nombre" value="${esc(i.nombre)}" aria-label="Nombre"><button class="ico danger" data-a="delIng" data-id="${i.id}" aria-label="Borrar ${esc(i.nombre)}">✕</button></div>
-    <div class="g3" style="margin-top:8px">${[['kcal', 'kcal'], ['prot', 'Proteína g'], ['grasa', 'Grasa g']].map(([f, n]) => `<label>${n}<input data-c="ing" data-id="${i.id}" data-f="${f}" value="${i[f]}" inputmode="decimal"></label>`).join('')}</div>
-  </div>`).join('') || `<p class="muted">${q ? 'Ningún ingrediente coincide.' : 'Aún no hay ingredientes.'}</p>`;
+  return L.map(i => {
+    const sel = ui.ingSel === i.id, M = ui.ingModo;
+    let extra = '';
+    if (sel && M === 'menu') extra = `<div class="menu">
+        <div class="muted" style="padding:0 16px 10px">${fmt(i.kcal)} kcal · ${fmt(i.prot, 1)} g prot · ${fmt(i.grasa, 1)} g grasa (por 100 g)</div>
+        <button data-a="ingModo" data-v="receta">Añadir a receta</button>
+        <button data-a="ingModo" data-v="editar">Editar</button>
+        <button class="danger" data-a="delIng" data-id="${i.id}">Eliminar</button></div>`;
+    else if (sel && M === 'editar') extra = `<div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:8px">
+        <label>Nombre<input id="eNombre" value="${esc(i.nombre)}"></label>
+        <div class="g3"><label>kcal<input id="eKcal" value="${i.kcal}" inputmode="decimal"></label><label>Proteína g<input id="eProt" value="${i.prot}" inputmode="decimal"></label><label>Grasa g<input id="eGrasa" value="${i.grasa}" inputmode="decimal"></label></div>
+        <div class="row"><button class="btn grow" data-a="ingGuardar">Guardar</button><button class="btn2" data-a="ingCerrar">Cancelar</button></div></div>`;
+    else if (sel && M === 'receta') extra = `<div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:8px">
+        ${db.recetas.length ? `<label>Receta<select id="eRec">${db.recetas.map(r => `<option value="${r.id}">${esc(r.nombre)}</option>`).join('')}</select></label>` : ''}
+        <label>${db.recetas.length ? 'O crea una receta nueva' : 'Nombre de la receta nueva'}<input id="eRecNom" placeholder="Déjalo vacío para usar la de arriba"></label>
+        <label>Gramos de ${esc(i.nombre)}<input id="eG" inputmode="decimal" placeholder="g"></label>
+        <div class="row"><button class="btn grow" data-a="ingARec">Añadir a receta</button><button class="btn2" data-a="ingCerrar">Cancelar</button></div></div>`;
+    return `<div class="card ${sel ? 'sel' : ''}" style="padding:0;overflow:hidden">
+      <div class="row" style="flex-wrap:nowrap;gap:0">
+        <button class="grow" style="background:none;text-align:left;padding:0 16px;min-height:52px;color:var(--text);font-size:16px;font-weight:${sel ? 600 : 400}" data-a="ingSel" data-id="${i.id}">${esc(i.nombre)}</button>
+        ${sel ? `<button class="ico" style="background:none;margin-right:4px;font-size:22px" data-a="ingMenu" aria-label="Opciones de ${esc(i.nombre)}">⋮</button>` : ''}
+      </div>${extra}</div>`;
+  }).join('') || `<p class="muted">${q ? 'Ningún ingrediente coincide.' : 'Aún no hay ingredientes.'}</p>`;
 }
 function cIngredientes() {
   return `
@@ -485,7 +545,7 @@ function cIngredientes() {
     </div>
     <div class="between"><b>${db.ingredientes.length} ingredientes</b></div>
     <input data-c="buscar" value="${esc(ui.buscar)}" placeholder="Buscar ingrediente" aria-label="Buscar ingrediente">
-    <div id="ingList" style="display:flex;flex-direction:column;gap:10px">${listaIng()}</div>`;
+    <div id="ingList" style="display:flex;flex-direction:column;gap:8px">${listaIng()}</div>`;
 }
 
 function cRecetas() {
@@ -595,14 +655,25 @@ document.addEventListener('click', e => {
       else { const d = fd(ui.fecha); d.setDate(1); d.setMonth(d.getMonth() + n); ui.fecha = fechaStr(d); }
       render(); break;
     }
-    case 'meal': ui.abierta = ui.abierta === V ? null : V; render(); if (ui.abierta) document.getElementById('aNom')?.focus(); break;
+    case 'meal': ui.abierta = ui.abierta === V ? null : V; ui.aliSel = null; ui.aliBus = ''; render(); break;
+    case 'aliTab': ui.aliTab = V; ui.aliSel = null; ui.aliBus = ''; render(); break;
+    case 'aliSel':
+      ui.aliSel = ui.aliSel?.id === id ? null : { tipo: ui.aliTab, id };
+      { const y = document.getElementById('aliList')?.scrollTop || 0; render(); const l = document.getElementById('aliList'); if (l) l.scrollTop = y; }
+      if (ui.aliSel) { document.getElementById('aliForm')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); document.getElementById('aG')?.focus({ preventScroll: true }); }
+      break;
     case 'addAli': {
-      const al = buscarAlimento(val('aNom')), g = num(val('aG'));
-      if (!al) return toast('Elige un ingrediente o receta de tu lista.');
+      const al = alimentoSel(), g = num(val('aG'));
+      if (!al) return toast('Elige un alimento de la tabla.');
       if (g <= 0) return toast('Pon los gramos.');
       const f = g / 100;
-      cambio(() => { const d = db.comidas[ui.fecha] = db.comidas[ui.fecha] || {}; (d[V] = d[V] || []).push({ nombre: al.nombre, g, kcal: al.kcal * f, prot: al.prot * f, grasa: al.grasa * f }); });
-      document.getElementById('aNom')?.focus(); break;
+      cambio(() => { const d = db.comidas[ui.fecha] = db.comidas[ui.fecha] || {}; (d[V] = d[V] || []).push({ nombre: al.nombre, g, kcal: al.kcal * f, prot: al.prot * f, grasa: al.grasa * f }); ui.aliSel = null; });
+      toast(`Añadido: ${al.nombre} (${fmt(g)} g)`); break;
+    }
+    case 'listo': {
+      const n = COMIDAS.find(c => c[0] === V)?.[1] || '';
+      ui.abierta = null; ui.aliSel = null; ui.aliBus = ''; render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast(`${n} guardado`); break;
     }
     case 'delAli': cambio(() => db.comidas[ui.fecha][V].splice(Number(b.dataset.i), 1)); break;
 
@@ -647,11 +718,11 @@ document.addEventListener('click', e => {
       cambio(() => { const prev = db.medidas.find(x => x.fecha === hoy()); if (prev) Object.assign(prev, m); else db.medidas.push(m); db.medidas.sort((x, y) => x.fecha.localeCompare(y.fecha)); });
       toast('Medidas guardadas'); break;
     }
-    case 'selFoto': ui.comp = ui.comp.includes(id) ? ui.comp.filter(x => x !== id) : [...ui.comp, id].slice(-2); render(); break;
-    case 'noSel': ui.comp = []; render(); break;
-    case 'delFotos': if (confirm('¿Borrar las fotos seleccionadas?')) cambio(() => { db.fotos = db.fotos.filter(f => !ui.comp.includes(f.id)); ui.comp = []; }); break;
+    case 'delMed': if (confirm('¿Borrar las medidas de ese día?')) cambio(() => db.medidas = db.medidas.filter(m => m.fecha !== V)); break;
+    case 'compPose': ui.compPose = V; render(); break;
+    case 'delFotoDia': if (confirm('¿Borrar las 3 fotos de ese día?')) cambio(() => db.fotos = db.fotos.filter(f => f.fecha !== V)); break;
 
-    case 'cfg': ui.cfg = V; ui.rutina = ui.sesion = ui.editEj = ui.rec = null; ui.fotoTmp = null; render(); break;
+    case 'cfg': ui.cfg = V; ui.rutina = ui.sesion = ui.editEj = ui.rec = ui.ingSel = ui.ingModo = null; ui.fotoTmp = null; render(); break;
     case 'back': if (V === 'rutinas') ui.rutina = null; ui.sesion = ui.editEj = null; ui.fotoTmp = null; render(); break;
     case 'addRutina': { const n = val('nRutina'); if (!n) return toast('Escribe el nombre de la rutina.'); cambio(() => db.rutinas.push({ id: uid(), nombre: n, sesiones: [] })); break; }
     case 'openRutina': ui.rutina = id; render(); break;
@@ -678,6 +749,25 @@ document.addEventListener('click', e => {
       if (db.ingredientes.some(i => i.nombre.toLowerCase() === n.toLowerCase())) return toast('Ya tienes un ingrediente con ese nombre.');
       cambio(() => db.ingredientes.push({ id: uid(), nombre: n, kcal: num(val('iKcal')), prot: num(val('iProt')), grasa: num(val('iGrasa')) }));
       toast('Ingrediente añadido'); document.getElementById('iNombre')?.focus(); break;
+    }
+    case 'ingSel': ui.ingSel = ui.ingSel === id ? null : id; ui.ingModo = null; document.getElementById('ingList').innerHTML = listaIng(); break;
+    case 'ingMenu': ui.ingModo = ui.ingModo === 'menu' ? null : 'menu'; document.getElementById('ingList').innerHTML = listaIng(); break;
+    case 'ingModo': ui.ingModo = V; document.getElementById('ingList').innerHTML = listaIng(); document.getElementById(V === 'editar' ? 'eNombre' : 'eG')?.focus(); break;
+    case 'ingCerrar': ui.ingSel = null; ui.ingModo = null; document.getElementById('ingList').innerHTML = listaIng(); break;
+    case 'ingGuardar': {
+      const i = ingPorId(ui.ingSel), n = val('eNombre');
+      if (!n) return toast('El nombre no puede quedar vacío.');
+      if (db.ingredientes.some(x => x.id !== i.id && x.nombre.toLowerCase() === n.toLowerCase())) return toast('Ya tienes otro ingrediente con ese nombre.');
+      Object.assign(i, { nombre: n, kcal: num(val('eKcal')), prot: num(val('eProt')), grasa: num(val('eGrasa')) });
+      ui.ingModo = null; ui.ingSel = null; guardar(); render(); toast('Ingrediente actualizado'); break;
+    }
+    case 'ingARec': {
+      const g = num(val('eG')), nueva = val('eRecNom'); if (g <= 0) return toast('Pon los gramos.');
+      let receta = nueva ? null : db.recetas.find(r => r.id === val('eRec'));
+      if (!nueva && !receta) return toast('Elige una receta o escribe el nombre de una nueva.');
+      const ingId = ui.ingSel;
+      cambio(() => { if (!receta) { receta = { id: uid(), nombre: nueva, items: [] }; db.recetas.push(receta); } receta.items.push({ ing: ingId, g }); ui.ingSel = null; ui.ingModo = null; });
+      toast(`Añadido a ${receta.nombre}`); break;
     }
     case 'delIng': {
       const usos = db.recetas.filter(x => x.items.some(it => it.ing === id)).length;
@@ -708,13 +798,13 @@ function exportar(tipo) {
 
 document.addEventListener('input', e => {
   const el = e.target;
-  if (el.id === 'aNom' || el.id === 'aG') {
-    const al = buscarAlimento(document.getElementById('aNom').value), g = num(document.getElementById('aG').value), p = document.getElementById('aPrev');
-    if (!al) { p.className = 'muted'; p.innerHTML = 'Elige un alimento de tu lista y pon los gramos.'; return; }
-    const f = g / 100;
-    p.className = 'g3';
-    p.innerHTML = g > 0 ? `<div class="pill"><b style="color:var(--blue)">${fmt(al.kcal * f)}</b>kcal</div><div class="pill"><b>${fmt(al.prot * f, 1)} g</b>proteína</div><div class="pill"><b>${fmt(al.grasa * f, 1)} g</b>grasa</div>`
-      : `<div class="pill" style="grid-column:span 3">${esc(al.nombre)}: ${fmt(al.kcal)} kcal por 100 g</div>`;
+  if (el.id === 'aG') {
+    const al = alimentoSel(), g = num(el.value), p = document.getElementById('aPrev'), f = g / 100;
+    if (!al || !p) return;
+    p.className = g > 0 ? 'g3' : ''; p.style.gap = '8px';
+    p.innerHTML = g > 0 ? `<div class="pill" style="background:var(--bg)"><b style="color:var(--blue)">${fmt(al.kcal * f)}</b>kcal</div><div class="pill" style="background:var(--bg)"><b>${fmt(al.prot * f, 1)} g</b>proteína</div><div class="pill" style="background:var(--bg)"><b>${fmt(al.grasa * f, 1)} g</b>grasa</div>` : '';
+  } else if (el.dataset.c === 'aliBus') {
+    ui.aliBus = el.value; document.getElementById('aliList').innerHTML = listaAli();
   } else if (el.dataset.c === 'buscar') {
     ui.buscar = el.value; document.getElementById('ingList').innerHTML = listaIng();
   }
@@ -732,10 +822,14 @@ document.addEventListener('change', async e => {
     const f = el.files[0]; if (!f) return;
     try { ui.fotoTmp = await leerFoto(f, 400); document.getElementById('fotoPrev').firstChild.replaceWith(Object.assign(new Image(), { src: ui.fotoTmp, alt: '' })); }
     catch { toast('No se ha podido leer la foto.'); }
-  } else if (c === 'foto') {
-    const f = el.files[0]; if (!f) return;
-    try { const img = await leerFoto(f, 900); cambio(() => db.fotos.push({ id: uid(), fecha: hoy(), img })); toast('Foto guardada'); }
-    catch { toast('No se ha podido leer la foto.'); }
+  } else if (c === 'compA' || c === 'compB') { ui[c] = el.value; render(); }
+  else if (c === 'foto') {
+    const f = el.files[0], pose = el.dataset.p; if (!f) return;
+    try {
+      const img = await leerFoto(f, 900);
+      cambio(() => { let d = db.fotos.find(x => x.fecha === hoy()); if (!d) { d = { fecha: hoy() }; db.fotos.push(d); db.fotos.sort((a, b) => a.fecha.localeCompare(b.fecha)); } d[pose] = img; ui.compA = ui.compB = null; });
+      toast('Foto guardada');
+    } catch { toast('No se ha podido leer la foto.'); }
   } else if (c === 'import') {
     const f = el.files[0]; if (!f) return;
     try {
@@ -763,6 +857,12 @@ document.addEventListener('keydown', e => {
 /* ======================= Arranque ======================= */
 (async () => {
   try { const d = await cargar(); if (d) db = { ...NUEVO(), ...d }; } catch { toast('No se ha podido abrir el almacenamiento.'); }
+  // Fotos del formato antiguo (una por registro) → formato por día con 3 posturas
+  if (db.fotos.some(f => f.img)) {
+    const m = {};
+    db.fotos.forEach(f => { const d = m[f.fecha] = m[f.fecha] || { fecha: f.fecha }; if (f.img) { if (!d.frente) d.frente = f.img; } else Object.assign(d, f); });
+    db.fotos = Object.values(m).sort((a, b) => a.fecha.localeCompare(b.fecha)); guardar();
+  }
   if (db.activo) { ui.tab = 'entreno'; pedirPantalla(); }
   render();
   try { await navigator.storage?.persist?.(); } catch {}

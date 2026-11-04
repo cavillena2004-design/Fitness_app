@@ -1,10 +1,11 @@
 // Guarda la app en el móvil para que funcione sin conexión.
 // Con conexión siempre intenta la versión nueva primero (así se actualiza sola).
-const CACHE = 'app-fitness-v1';
+const CACHE = 'app-fitness-v2';
 const ARCHIVOS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARCHIVOS)));
+  // Si falta algún archivo (p. ej. un icono), el resto se guarda igualmente
+  e.waitUntil(caches.open(CACHE).then(c => Promise.allSettled(ARCHIVOS.map(f => c.add(f)))));
   self.skipWaiting();
 });
 
